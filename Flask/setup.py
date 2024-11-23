@@ -12,7 +12,8 @@ setup(
         "requests",
         "beautifulsoup4",
         "transformers",
-        "tabulate"
+        "tabulate",
+        "waitress"
     ],
     entry_points={
         'console_scripts': [
