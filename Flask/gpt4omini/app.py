@@ -138,7 +138,11 @@ def perform_calculations(MODEL_LIST, num_gpu, prompt_size, response_size, n_conc
     use_case = "General"
     print(f" num_gpu = {num_gpu}, prompt_size = {prompt_size} tokens, response_size = {response_size} tokens")
     print(f" n_concurrent_request = {n_concurrent_request}, avg_context_window = {avg_context_window} tokens")
-
+    print(f"datatype: {datatype}- ", datatype == "FP8")
+    if datatype == "FP8":
+        byte_factor = 1
+    else:
+        byte_factor = 2
 
 
     model_specs = []
@@ -172,19 +176,19 @@ def perform_calculations(MODEL_LIST, num_gpu, prompt_size, response_size, n_conc
 
     BYTES_IN_GB = 1_073_741_824  # 1 GB = 1,073,741,824 bytes
 
-    def calc_kv_cache_size_per_token(n_layers, d_model):
-        return 2 * 2 * n_layers * d_model / BYTES_IN_GB  # GB/token
+    def calc_kv_cache_size_per_token(n_layers, d_model, byte_factor=2):
+        return byte_factor * 2 * n_layers * d_model / BYTES_IN_GB  # GB/token
 
-    def calc_memory_footprint(model_spec, n_concurrent_request, avg_context_window):
-        kv_cache_size_per_token = calc_kv_cache_size_per_token(model_spec["n_layers"], model_spec["d_model"])
-        target_gpu_mem = kv_cache_size_per_token * avg_context_window * n_concurrent_request + model_spec["params_billion"] * 2
+    def calc_memory_footprint(model_spec, n_concurrent_request, avg_context_window, byte_factor=2):
+        kv_cache_size_per_token = calc_kv_cache_size_per_token(model_spec["n_layers"], model_spec["d_model"], byte_factor)
+        target_gpu_mem = kv_cache_size_per_token * avg_context_window * n_concurrent_request + model_spec["params_billion"] * byte_factor
         return target_gpu_mem
 
     print(f"\n******************** Estimate LLM Memory Footprint ********************")
     memory_footprint_table = []
     for model_spec in model_specs:
-        kv_cache_size_per_token = calc_kv_cache_size_per_token(model_spec["n_layers"], model_spec["d_model"])
-        memory_footprint = calc_memory_footprint(model_spec, n_concurrent_request, avg_context_window)
+        kv_cache_size_per_token = calc_kv_cache_size_per_token(model_spec["n_layers"], model_spec["d_model"], byte_factor)
+        memory_footprint = calc_memory_footprint(model_spec, n_concurrent_request, avg_context_window, byte_factor)
         memory_footprint_table.append([model_spec['name'], f"{kv_cache_size_per_token:.6f}", f"{memory_footprint:.2f}"])
     print(tabulate(memory_footprint_table, headers=['Model', 'KV Cache Size per Token (GiB/token)', 'Memory Footprint (GB)'], tablefmt='orgtbl'))
     # Save memory footprint table
@@ -193,16 +197,16 @@ def perform_calculations(MODEL_LIST, num_gpu, prompt_size, response_size, n_conc
     # save_to_csv(memory_footprint_table, ['Model', 'KV Cache Size per Token (GiB/token)', 'Memory Footprint (GB)'], os.path.join(OUTPUT_DIR, memory_footprint_filename))
     # print(f"Memory footprint data saved to {memory_footprint_filename}")
 
-    def calc_kv_cache_tokens(num_gpu, gpu_memory_gb, model_params_billion, kv_cache_size):
-        result = (num_gpu * gpu_memory_gb - 2 * model_params_billion) / kv_cache_size
+    def calc_kv_cache_tokens(num_gpu, gpu_memory_gb, model_params_billion, kv_cache_size, byte_factor=2):
+        result = (num_gpu * gpu_memory_gb - byte_factor * model_params_billion) / kv_cache_size
         return result if result >= 0 else "OOM"
 
-    def calc_prefill_time_per_token(num_gpu, model_params_billion, fp16_tflops):
-        result = (2 * model_params_billion / num_gpu) / fp16_tflops
+    def calc_prefill_time_per_token(num_gpu, model_params_billion, fp16_tflops, byte_factor=2):
+        result = (byte_factor * model_params_billion / num_gpu) / fp16_tflops
         return result if result >= 0 else "OOM"
 
-    def calc_generation_time_per_token(num_gpu, model_params_billion, memory_bandwidth_gbps):
-        result = (2 * model_params_billion / num_gpu) / memory_bandwidth_gbps * 1000
+    def calc_generation_time_per_token(num_gpu, model_params_billion, memory_bandwidth_gbps, byte_factor=2):
+        result = (byte_factor * model_params_billion / num_gpu) / memory_bandwidth_gbps * 1000
         return result if result >= 0 else "OOM"
 
     def calc_estimated_ttft_time(prefill_time, generation_time, prompt_size, response_size):
@@ -215,26 +219,14 @@ def perform_calculations(MODEL_LIST, num_gpu, prompt_size, response_size, n_conc
             return "OOM"
         return (prompt_size * prefill_time + response_size * generation_time) / 1000  # convert ms to seconds
 
-    # print(f"\n******************** Estimate LLM Capacity and Latency ******************** ")
-    # capacity_latency_table = []
-    # for model in model_specs:
-    #     # print(f"Model: {model['name']} ({model['params_billion']}B parameters)")
-    #     kv_cache_size = calc_kv_cache_size_per_token(model['n_layers'], model['d_model'])
-    #     for gpu in gpu_specs:
-    #         kv_cache_tokens = calc_kv_cache_tokens(num_gpu, gpu['memory_gb'], model['params_billion'], kv_cache_size)
-    #         prefill_time_per_token = calc_prefill_time_per_token(num_gpu, model['params_billion'], gpu['fp16_tflops'])
-    #         generation_time_per_token = calc_generation_time_per_token(num_gpu, model['params_billion'], gpu['memory_bandwidth_gbps'])
-    #         estimated_ttft = calc_estimated_ttft_time(prefill_time_per_token, generation_time_per_token, prompt_size, response_size)
-    #         estimated_response_time = calc_estimated_response_time(prefill_time_per_token, generation_time_per_token, prompt_size, response_size)
-    #         capacity_latency_table.append([model['name'], gpu['name'], f"{kv_cache_tokens}", f"{prefill_time_per_token:.3f}", f"{generation_time_per_token:.3f}", f"{estimated_ttft:.3f}", f"{estimated_response_time:.3f}"])
     print(f"\n******************** Estimate LLM Capacity and Latency ******************** ")
     capacity_latency_table = []
     for model in model_specs:
-        kv_cache_size = calc_kv_cache_size_per_token(model['n_layers'], model['d_model'])
+        kv_cache_size = calc_kv_cache_size_per_token(model['n_layers'], model['d_model'], byte_factor)
         for gpu in gpu_specs[datatype]:  # Use the correct GPU specs based on datatype
-            kv_cache_tokens = calc_kv_cache_tokens(num_gpu, gpu['memory_gb'], model['params_billion'], kv_cache_size)
-            prefill_time_per_token = calc_prefill_time_per_token(num_gpu, model['params_billion'], gpu['fp16_tflops'])
-            generation_time_per_token = calc_generation_time_per_token(num_gpu, model['params_billion'], gpu['memory_bandwidth_gbps'])
+            kv_cache_tokens = calc_kv_cache_tokens(num_gpu, gpu['memory_gb'], model['params_billion'], kv_cache_size, byte_factor)
+            prefill_time_per_token = calc_prefill_time_per_token(num_gpu, model['params_billion'], gpu['fp16_tflops'], byte_factor)
+            generation_time_per_token = calc_generation_time_per_token(num_gpu, model['params_billion'], gpu['memory_bandwidth_gbps'], byte_factor)
             estimated_ttft = calc_estimated_ttft_time(prefill_time_per_token, generation_time_per_token, prompt_size, response_size)
             estimated_response_time = calc_estimated_response_time(prefill_time_per_token, generation_time_per_token, prompt_size, response_size)
             capacity_latency_table.append([model['name'], gpu['name'], f"{kv_cache_tokens}", f"{prefill_time_per_token:.3f}", f"{generation_time_per_token:.3f}", f"{estimated_ttft:.3f}", f"{estimated_response_time:.3f}"])
