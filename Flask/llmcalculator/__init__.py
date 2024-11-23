@@ -20,51 +20,51 @@ def create_app(test_config=None):
 
     gpu_specs = {
         "FP8": [
-            {"name": "L4", "fp16_tflops": 121, "memory_gb": 24, "memory_bandwidth_gbps": 300},
-            {"name": "L20", "fp16_tflops": 193, "memory_gb": 48, "memory_bandwidth_gbps": 864},
-            {"name": "L40", "fp16_tflops": 362, "memory_gb": 48, "memory_bandwidth_gbps": 864},
-            {"name": "L40s", "fp16_tflops": 733, "memory_gb": 48, "memory_bandwidth_gbps": 864},
-            {"name": "H100 PCIe", "fp16_tflops": 1513, "memory_gb": 80, "memory_bandwidth_gbps": 2000},
-            {"name": "H100 SXM", "fp16_tflops": 1979, "memory_gb": 80, "memory_bandwidth_gbps": 3350},
-            {"name": "H100 SXM", "fp16_tflops": 1979, "memory_gb": 80, "memory_bandwidth_gbps": 3350},
-            {"name": "Intel Gaudi 2", "fp16_tflops": 865, "memory_gb": 96, "memory_bandwidth_gbps": 2460},
-            {"name": "Intel Gaudi 3", "fp16_tflops": 1835, "memory_gb": 128, "memory_bandwidth_gbps": 3700},
-            {"name": "AMD MI300X", "fp16_tflops": 2610, "memory_gb": 192, "memory_bandwidth_gbps": 5300},
-            {"name": "AMD MI325X", "fp16_tflops": 2610, "memory_gb": 256, "memory_bandwidth_gbps": 6000},
-            {"name": "H200 SXM", "fp16_tflops": 1979, "memory_gb": 141, "memory_bandwidth_gbps": 4800},
+            {"name": "NVIDIA L4", "fp16_tflops": 121, "memory_gb": 24, "memory_bandwidth_gbps": 300, "vendor": "NVIDIA"},
+            {"name": "NVIDIA L20", "fp16_tflops": 193, "memory_gb": 48, "memory_bandwidth_gbps": 864, "vendor": "NVIDIA"},
+            {"name": "NVIDIA L40", "fp16_tflops": 362, "memory_gb": 48, "memory_bandwidth_gbps": 864, "vendor": "NVIDIA"},
+            {"name": "NVIDIA L40s", "fp16_tflops": 733, "memory_gb": 48, "memory_bandwidth_gbps": 864, "vendor": "NVIDIA"},
+            {"name": "NVIDIA H100 PCIe", "fp16_tflops": 1513, "memory_gb": 80, "memory_bandwidth_gbps": 2000, "vendor": "NVIDIA"},
+            {"name": "NVIDIA H100 SXM", "fp16_tflops": 1979, "memory_gb": 80, "memory_bandwidth_gbps": 3350, "vendor": "NVIDIA"},
+            {"name": "NVIDIA H100 SXM", "fp16_tflops": 1979, "memory_gb": 80, "memory_bandwidth_gbps": 3350, "vendor": "NVIDIA"},
+            {"name": "NVIDIA H200 SXM", "fp16_tflops": 1979, "memory_gb": 141, "memory_bandwidth_gbps": 4800, "vendor": "NVIDIA"},
+            {"name": "Intel Gaudi 2", "fp16_tflops": 865, "memory_gb": 96, "memory_bandwidth_gbps": 2460, "vendor": "Intel"},
+            {"name": "Intel Gaudi 3", "fp16_tflops": 1835, "memory_gb": 128, "memory_bandwidth_gbps": 3700, "vendor": "Intel"},
+            {"name": "AMD MI300X", "fp16_tflops": 2610, "memory_gb": 192, "memory_bandwidth_gbps": 5300, "vendor": "AMD"},
+            {"name": "AMD MI325X", "fp16_tflops": 2610, "memory_gb": 256, "memory_bandwidth_gbps": 6000, "vendor": "AMD"},
             # Add or comment out GPU types as needed
         ],
         "BF16": [
-            {"name": "A10", "fp16_tflops": 125, "memory_gb": 24, "memory_bandwidth_gbps": 600},
-            {"name": "L20", "fp16_tflops": 59.35, "memory_gb": 48, "memory_bandwidth_gbps": 864},
-            {"name": "L40", "fp16_tflops": 181, "memory_gb": 48, "memory_bandwidth_gbps": 864},
-            {"name": "L40s", "fp16_tflops": 362, "memory_gb": 48, "memory_bandwidth_gbps": 864},
-            {"name": "A100 40 GB", "fp16_tflops": 312, "memory_gb": 40, "memory_bandwidth_gbps": 1555},
-            {"name": "A100 40 GB SXM", "fp16_tflops": 312, "memory_gb": 40, "memory_bandwidth_gbps": 1555},
-            {"name": "A100 80 GB PCIe", "fp16_tflops": 312, "memory_gb": 80, "memory_bandwidth_gbps": 1935},
-            {"name": "A100 80 GB SXM", "fp16_tflops": 312, "memory_gb": 80, "memory_bandwidth_gbps": 2039},
-            {"name": "H100 PCIe", "fp16_tflops": 756, "memory_gb": 80, "memory_bandwidth_gbps": 2000},
-            {"name": "H100 SXM", "fp16_tflops": 989, "memory_gb": 80, "memory_bandwidth_gbps": 3350},
-            {"name": "H100 SXM", "fp16_tflops": 989, "memory_gb": 80, "memory_bandwidth_gbps": 3350},
-            {"name": "Intel Gaudi 2", "fp16_tflops": 432, "memory_gb": 96, "memory_bandwidth_gbps": 2460},
-            {"name": "Intel Gaudi 3", "fp16_tflops": 1835, "memory_gb": 128, "memory_bandwidth_gbps": 3700},
-            {"name": "AMD MI210", "fp16_tflops": 181, "memory_gb": 64, "memory_bandwidth_gbps": 1600},
+            {"name": "NVIDIA A10", "fp16_tflops": 125, "memory_gb": 24, "memory_bandwidth_gbps": 600, "vendor": "NVIDIA"},
+            {"name": "NVIDIA L20", "fp16_tflops": 59.35, "memory_gb": 48, "memory_bandwidth_gbps": 864, "vendor": "NVIDIA"},
+            {"name": "NVIDIA L40", "fp16_tflops": 181, "memory_gb": 48, "memory_bandwidth_gbps": 864, "vendor": "NVIDIA"},
+            {"name": "NVIDIA L40s", "fp16_tflops": 362, "memory_gb": 48, "memory_bandwidth_gbps": 864, "vendor": "NVIDIA"},
+            {"name": "NVIDIA A100 40 GB", "fp16_tflops": 312, "memory_gb": 40, "memory_bandwidth_gbps": 1555, "vendor": "NVIDIA"},
+            {"name": "NVIDIA A100 40 GB SXM", "fp16_tflops": 312, "memory_gb": 40, "memory_bandwidth_gbps": 1555, "vendor": "NVIDIA"},
+            {"name": "NVIDIA A100 80 GB PCIe", "fp16_tflops": 312, "memory_gb": 80, "memory_bandwidth_gbps": 1935, "vendor": "NVIDIA"},
+            {"name": "NVIDIA A100 80 GB SXM", "fp16_tflops": 312, "memory_gb": 80, "memory_bandwidth_gbps": 2039, "vendor": "NVIDIA"},
+            {"name": "NVIDIA H100 PCIe", "fp16_tflops": 756, "memory_gb": 80, "memory_bandwidth_gbps": 2000, "vendor": "NVIDIA"},
+            {"name": "NVIDIA H100 SXM", "fp16_tflops": 989, "memory_gb": 80, "memory_bandwidth_gbps": 3350, "vendor": "NVIDIA"},
+            {"name": "NVIDIA H100 SXM", "fp16_tflops": 989, "memory_gb": 80, "memory_bandwidth_gbps": 3350, "vendor": "NVIDIA"},
+            {"name": "NVIDIA H200 SXM", "fp16_tflops": 989, "memory_gb": 141, "memory_bandwidth_gbps": 4800, "vendor": "NVIDIA"},
+            {"name": "Intel Gaudi 2", "fp16_tflops": 432, "memory_gb": 96, "memory_bandwidth_gbps": 2460, "vendor": "Intel"},
+            {"name": "Intel Gaudi 3", "fp16_tflops": 1835, "memory_gb": 128, "memory_bandwidth_gbps": 3700, "vendor": "Intel"},
+            {"name": "AMD MI210", "fp16_tflops": 181, "memory_gb": 64, "memory_bandwidth_gbps": 1600, "vendor": "AMD"},
             # {"name": "AMD MI250", "fp16_tflops": 362, "memory_gb": 128, "memory_bandwidth_gbps": 3280},
             # {"name": "AMD MI250X", "fp16_tflops": 383, "memory_gb": 128, "memory_bandwidth_gbps": 3280},
-            {"name": "AMD MI300X", "fp16_tflops": 1300, "memory_gb": 192, "memory_bandwidth_gbps": 5300},
-            {"name": "AMD MI325X", "fp16_tflops": 1307.4, "memory_gb": 256, "memory_bandwidth_gbps": 6000},
-            {"name": "H200 SXM", "fp16_tflops": 989, "memory_gb": 141, "memory_bandwidth_gbps": 4800},
-            {"name": "Google TPU v4", "fp16_tflops": 275, "memory_gb": 32, "memory_bandwidth_gbps": 1200},
-            {"name": "Google TPU v5e", "fp16_tflops": 197, "memory_gb": 16, "memory_bandwidth_gbps": 1600},
-            {"name": "Google TPU v5p", "fp16_tflops": 459, "memory_gb": 95, "memory_bandwidth_gbps": 4800},
+            {"name": "AMD MI300X", "fp16_tflops": 1300, "memory_gb": 192, "memory_bandwidth_gbps": 5300, "vendor": "AMD"},
+            {"name": "AMD MI325X", "fp16_tflops": 1307.4, "memory_gb": 256, "memory_bandwidth_gbps": 6000, "vendor": "AMD"},
+            {"name": "Google TPU v4", "fp16_tflops": 275, "memory_gb": 32, "memory_bandwidth_gbps": 1200, "vendor": "Google"},
+            {"name": "Google TPU v5e", "fp16_tflops": 197, "memory_gb": 16, "memory_bandwidth_gbps": 1600, "vendor": "Google"},
+            {"name": "Google TPU v5p", "fp16_tflops": 459, "memory_gb": 95, "memory_bandwidth_gbps": 4800, "vendor": "Google"},
             # Add or comment out GPU types as needed
         ],
     }
 
-    OUTPUT_DIR = 'benchmark'
+    # OUTPUT_DIR = 'benchmark'
 
-    if not os.path.exists(OUTPUT_DIR):
-        os.makedirs(OUTPUT_DIR)
+    # if not os.path.exists(OUTPUT_DIR):
+    #     os.makedirs(OUTPUT_DIR)
 
     # def count_parameters(config):
     #     vocab_size = config.vocab_size
@@ -264,7 +264,7 @@ def create_app(test_config=None):
                 estimated_response_time = calc_estimated_response_time(prefill_time_per_token, generation_time_per_token, prompt_size, response_size)
                 if not kv_cache_tokens == "OOM":
                     kv_cache_tokens = int(kv_cache_tokens)
-                capacity_latency_table.append([model['name'], gpu['name'], f"{kv_cache_tokens}", f"{prefill_time_per_token:.3f}", f"{generation_time_per_token:.3f}", f"{estimated_ttft:.3f}", f"{estimated_response_time:.3f}"])
+                capacity_latency_table.append([model['name'], gpu['name'], f"{kv_cache_tokens}", f"{prefill_time_per_token:.3f}", f"{generation_time_per_token:.3f}", f"{estimated_ttft:.3f}", f"{estimated_response_time:.3f}", gpu["vendor"]])
         # print(tabulate(capacity_latency_table, headers=['Model', 'GPU', 'KV Cache Tokens', 'Prefill Time (ms)', 'Generation Time (ms)', 'Estimated Time To First Token (TTFT) (s)', 'Estimated Response Time (s)'], tablefmt='orgtbl'))
         # Save capacity and latency table
         # capacity_latency_filename = f"capacity_latency_gpu{num_gpu}_prompt{prompt_size}_response{response_size}_concurrent{n_concurrent_request}_context{avg_context_window}.csv"
