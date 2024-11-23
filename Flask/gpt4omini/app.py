@@ -1,10 +1,12 @@
 import argparse
 from tabulate import tabulate
-from transformers import AutoConfig
+from transformers import AutoConfig, AutoModel
 import csv
 import os
 from flask import Flask, render_template, request, jsonify, send_file
 import json
+import requests
+from bs4 import BeautifulSoup
 
 app = Flask(__name__)
 
@@ -56,26 +58,26 @@ OUTPUT_DIR = 'benchmark'
 if not os.path.exists(OUTPUT_DIR):
     os.makedirs(OUTPUT_DIR)
 
-def count_parameters(config):
-    vocab_size = config.vocab_size
-    hidden_size = config.hidden_size
-    num_hidden_layers = config.num_hidden_layers
-    num_attention_heads = config.num_attention_heads
-    intermediate_size = config.intermediate_size
-    max_position_embeddings = config.max_position_embeddings
+# def count_parameters(config):
+#     vocab_size = config.vocab_size
+#     hidden_size = config.hidden_size
+#     num_hidden_layers = config.num_hidden_layers
+#     num_attention_heads = config.num_attention_heads
+#     intermediate_size = config.intermediate_size
+#     max_position_embeddings = config.max_position_embeddings
 
-    # Embeddings
-    embedding_params = vocab_size * hidden_size + max_position_embeddings * hidden_size
+#     # Embeddings
+#     embedding_params = vocab_size * hidden_size + max_position_embeddings * hidden_size
 
-    # Transformer layers
-    attention_params = 4 * hidden_size * hidden_size * num_hidden_layers
-    ffn_params = 2 * hidden_size * intermediate_size * num_hidden_layers
+#     # Transformer layers
+#     attention_params = 4 * hidden_size * hidden_size * num_hidden_layers
+#     ffn_params = 2 * hidden_size * intermediate_size * num_hidden_layers
 
-    # Output layer
-    output_params = hidden_size * vocab_size
+#     # Output layer
+#     output_params = hidden_size * vocab_size
 
-    total_params = embedding_params + attention_params + ffn_params + output_params
-    return total_params
+#     total_params = embedding_params + attention_params + ffn_params + output_params
+#     return total_params
 
 def save_to_csv(data, headers, filename):
     with open(filename, 'w', newline='') as csvfile:
@@ -92,11 +94,8 @@ def index():
 def calculate():
     data = request.json
     print(data['model_list'])
-    print(data['model_size'])
     model_list = data['model_list'].split(',')
-    model_size = data['model_size'].split(',')
-    model_size = [int(item) for item in model_size]
-    MODEL_LIST = list(zip(model_list, model_size))
+    # model_list
     num_gpu = int(data['num_gpu'])
     prompt_size = int(data['prompt_sz'])
     response_size = int(data['response_sz'])
@@ -107,7 +106,7 @@ def calculate():
 
     # Perform calculations (adapt your main() function here)
     memory_footprint_table, capacity_latency_table = perform_calculations(
-        MODEL_LIST, num_gpu, prompt_size, response_size, n_concurrent_request, avg_context_window, use_case, datatype
+        model_list, num_gpu, prompt_size, response_size, n_concurrent_request, avg_context_window, use_case, datatype
     )
 
     return jsonify({
@@ -127,7 +126,7 @@ def get_gpu_specs():
         return jsonify({"error": "Invalid datatype"}), 400
     return jsonify(gpu_specs[datatype])
 
-def perform_calculations(MODEL_LIST, num_gpu, prompt_size, response_size, n_concurrent_request, avg_context_window, use_case, datatype):
+def perform_calculations(model_list, num_gpu, prompt_size, response_size, n_concurrent_request, avg_context_window, use_case, datatype):
     # Print input
     # print(f" Use case: {use_case}")
     use_case = "General"
@@ -141,8 +140,25 @@ def perform_calculations(MODEL_LIST, num_gpu, prompt_size, response_size, n_conc
 
 
     model_specs = []
-    for model, model_params_billion in MODEL_LIST:
+    for model in model_list:
+        model = model.lstrip().rstrip()
         model_config = AutoConfig.from_pretrained(model)
+
+        url = 'https://huggingface.co/' + model
+
+        selector = 'body > div > main > div.container.relative.flex.flex-col.md\:grid.md\:space-y-0.w-full.md\:grid-cols-12.md\:flex-1.md\:grid-rows-full.space-y-4.md\:gap-6 > section.pt-8.border-gray-100.md\:col-span-5.pt-6.md\:pb-24.md\:pl-6.md\:border-l.order-first.md\:order-none > div:nth-child(3) > div > div.flex.flex-wrap.gap-x-1\\.5.gap-y-1.text-sm > div:nth-child(1) > div.px-1\\.5'
+
+        try:
+            response = requests.get(url)
+            soup = BeautifulSoup(response.text, 'html.parser')
+            element = soup.select_one(selector)
+            extracted_text = element.text.strip() if element else ''
+            # return jsonify({'text': extracted_text})
+            print(extracted_text)
+        except Exception as e:
+            print("Fail to scrape from webpage")
+            # return jsonify({'error': str(e)}), 500
+
 
         # Try these in order:
         context_length = getattr(model_config, "max_position_embeddings", None)
@@ -159,14 +175,13 @@ def perform_calculations(MODEL_LIST, num_gpu, prompt_size, response_size, n_conc
 
         model_specs.append({
             "name": model,
-            "params_billion": model_params_billion,
+            "params_billion": float(extracted_text.split('B')[0]),
             "d_model": model_config.hidden_size,
             "n_heads": model_config.num_attention_heads,
             "n_layers": model_config.num_hidden_layers,
             "max_context_window": context_length,
             "d_head": model_config.hidden_size // model_config.num_attention_heads,
         })
-        print(model_specs[-1])
 
 
     BYTES_IN_GB = 1_073_741_824  # 1 GB = 1,073,741,824 bytes
@@ -182,10 +197,25 @@ def perform_calculations(MODEL_LIST, num_gpu, prompt_size, response_size, n_conc
     print(f"\n******************** Estimate LLM Memory Footprint ********************")
     memory_footprint_table = []
     for model_spec in model_specs:
-        kv_cache_size_per_token = calc_kv_cache_size_per_token(model_spec["n_layers"], model_spec["d_model"], byte_factor)
-        memory_footprint = calc_memory_footprint(model_spec, n_concurrent_request, avg_context_window, byte_factor)
-        memory_footprint_table.append([model_spec['name'], f"{kv_cache_size_per_token:.6f}", f"{memory_footprint:.2f}"])
-    print(tabulate(memory_footprint_table, headers=['Model', 'KV Cache Size per Token (GiB/token)', 'Memory Footprint (GB)'], tablefmt='orgtbl'))
+        kv_cache_size_per_token = calc_kv_cache_size_per_token(
+            model_spec["n_layers"], 
+            model_spec["d_model"], 
+            byte_factor
+        )
+        memory_footprint = calc_memory_footprint(
+            model_spec, 
+            n_concurrent_request, 
+            avg_context_window if avg_context_window > 0 else model_spec["max_context_window"], 
+            byte_factor
+        )
+        memory_footprint_table.append(
+            [
+                model_spec['name'], 
+                f"{kv_cache_size_per_token:.6f}", 
+                f"{memory_footprint:.2f}"
+            ]
+        )
+    # print(tabulate(memory_footprint_table, headers=['Model', 'KV Cache Size per Token (GiB/token)', 'Memory Footprint (GB)'], tablefmt='orgtbl'))
     # Save memory footprint table
     # memory_footprint_filename = f"memory_footprint_gpu{num_gpu}_prompt{prompt_size}_response{response_size}_concurrent{n_concurrent_request}_context{avg_context_window}.csv"
     # memory_footprint_filename = f"memory_footprint_{use_case}_gpu{num_gpu}_prompt{prompt_size}_response{response_size}_concurrent{n_concurrent_request}_context{avg_context_window}.csv"
@@ -225,7 +255,7 @@ def perform_calculations(MODEL_LIST, num_gpu, prompt_size, response_size, n_conc
             estimated_ttft = calc_estimated_ttft_time(prefill_time_per_token, generation_time_per_token, prompt_size, response_size)
             estimated_response_time = calc_estimated_response_time(prefill_time_per_token, generation_time_per_token, prompt_size, response_size)
             capacity_latency_table.append([model['name'], gpu['name'], f"{kv_cache_tokens}", f"{prefill_time_per_token:.3f}", f"{generation_time_per_token:.3f}", f"{estimated_ttft:.3f}", f"{estimated_response_time:.3f}"])
-    print(tabulate(capacity_latency_table, headers=['Model', 'GPU', 'KV Cache Tokens', 'Prefill Time (ms)', 'Generation Time (ms)', 'Estimated Time To First Token (TTFT) (s)', 'Estimated Response Time (s)'], tablefmt='orgtbl'))
+    # print(tabulate(capacity_latency_table, headers=['Model', 'GPU', 'KV Cache Tokens', 'Prefill Time (ms)', 'Generation Time (ms)', 'Estimated Time To First Token (TTFT) (s)', 'Estimated Response Time (s)'], tablefmt='orgtbl'))
     # Save capacity and latency table
     # capacity_latency_filename = f"capacity_latency_gpu{num_gpu}_prompt{prompt_size}_response{response_size}_concurrent{n_concurrent_request}_context{avg_context_window}.csv"
     # capacity_latency_filename = f"capacity_latency_{use_case}_gpu{num_gpu}_prompt{prompt_size}_response{response_size}_concurrent{n_concurrent_request}_context{avg_context_window}.csv"

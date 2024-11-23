@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LLM Performance Calculator</title>
+    <title>LLM Performance Estimation Calculator</title>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/tabulator-tables@4.9.3/dist/js/tabulator.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/tabulator-tables@4.9.3/dist/css/tabulator.min.css" rel="stylesheet">
@@ -76,53 +76,106 @@
         .download-buttons button:hover {
             background-color: #218838;
         }
-        /* Collapsible section styles */
+        
+        /* Updated Collapsible section styles */
         .collapsible {
-            background-color: #f1f1f1;
-            color: #444;
+            background-color: #007bff;
+            color: white;
             cursor: pointer;
-            padding: 10px;
+            padding: 18px;
             width: 100%;
             border: none;
             text-align: left;
             outline: none;
-            font-size: 15px;
-            margin-top: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 20px;
+            border-radius: 8px;
+            transition: 0.3s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
+
+        .collapsible:after {
+            content: '\002B';
+            color: white;
+            font-weight: bold;
+            float: right;
+            margin-left: 5px;
+            font-size: 22px;
+        }
+
         .active, .collapsible:hover {
-            background-color: #ccc;
+            background-color: #0056b3;
         }
+
+        .active:after {
+            content: "\2212";
+        }
+
         .content {
             padding: 0 18px;
-            display: none;
+            max-height: 0;
             overflow: hidden;
-            background-color: white;
+            transition: max-height 0.2s ease-out;
+            background-color: #f1f1f1;
+            border-radius: 0 0 8px 8px;
+        }
+
+        /* New styles for section distinction */
+        .section {
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+            padding: 20px;
+            margin-top: 40px;
+        }
+
+        .section h2 {
+            color: #007bff;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+
+        #memoryFootprintTable, #capacityLatencyTable {
+            margin-top: 15px;
+        }
+
+        .tabulator {
+            border: 1px solid #dee2e6;
+        }
+
+        .disclaimer {
+            background-color: #fff3cd;
+            border: 1px solid #ffeeba;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 30px;
+            margin-bottom: 20px;
+        }
+
+        .disclaimer h2 {
+            color: #856404;
+            margin-top: 0;
+        }
+
+        .disclaimer p {
+            color: #856404;
+            margin-bottom: 0;
         }
     </style>
 </head>
 <body>
-    <h1>LLM Performance Calculator</h1>
+    <h1>LLM Performance Estimation Calculator</h1>
     <form id="calculatorForm">
-        <label for="model_list">MODEL_LIST (HuggingFace paths, comma-separated) e.g. meta-llama/Llama-3.1-8B-Instruct,meta-llama/Llama-3.1-70B-Instruct:</label>
-        <input type="text" id="model_list" required><br>
-
-        <label for="model_size"> Model Size (in Billion of parameters, comma-separated) e.g. 8,70:</label>
-        <input type="text" id="model_size" required><br>
+        <label for="model_list">Model List (HuggingFace paths, comma-separated) e.g. meta-llama/Llama-3.1-8B-Instruct,meta-llama/Llama-3.1-70B-Instruct:</label>
+        <input type="text" id="model_list" value="meta-llama/Llama-3.1-70B-Instruct,meta-llama/Llama-3.1-405B-Instruct" required><br>
 
         <label for="num_gpu">Number of GPUs:</label>
-        <input type="number" id="num_gpu" min="1" required><br>
-
-        <label for="prompt_sz">Prompt Size (Number of Input Tokens):</label>
-        <input type="number" id="prompt_sz" min="1" required><br>
-
-        <label for="response_sz">Response Size (Number of Output Tokens):</label>
-        <input type="number" id="response_sz" min="1" required><br>
-
-        <label for="n_concurrent_req">Number of Concurrent Requests:</label>
-        <input type="number" id="n_concurrent_req" min="1" required><br>
-
-        <label for="ctx_window">Context Window:</label>
-        <input type="number" id="ctx_window" min="1" required><br>
+        <input type="number" id="num_gpu" min="1" value="8" required><br>
 
         <label for="use_case">Use Case:</label>
         <select id="use_case">
@@ -137,6 +190,26 @@
             <option value="Question_Answering">Question Answering</option>
         </select><br>
 
+        <label for="prompt_sz">Prompt Size (Number of Input Tokens):</label>
+        <input type="number" id="prompt_sz" min="1" required><br>
+
+        <label for="response_sz">Response Size (Number of Output Tokens):</label>
+        <input type="number" id="response_sz" min="1" required><br>
+
+        <label for="n_concurrent_req">Number of Concurrent Requests:</label>
+        <input type="number" id="n_concurrent_req" min="1" value="16" required><br>
+
+        <label for="ctx_length_type">Context Length Type:</label>
+        <select id="ctx_length_type">
+            <option value="full">Full Model Context Length</option>
+            <option value="custom">Custom Context Length</option>
+        </select><br>
+
+        <div id="custom_ctx_length_container" style="display: none;">
+            <label for="custom_ctx_length">Custom Context Length:</label>
+            <input type="number" id="custom_ctx_length" min="1" value="8192" required><br>
+        </div>
+
         <label for="datatype">Datatype:</label>
         <select id="datatype">
             <option value="BF16">BF16</option>
@@ -146,16 +219,32 @@
         <button type="submit">Calculate</button>
     </form>
 
-    <h2>Available GPU Specifications</h2>
-    <button class="collapsible">Show GPU Specs</button>
-    <div class="content" id="gpuSpecsTable"></div>
+    <div class="section">
+        <h2>Available GPU Specifications</h2>
+        <button class="collapsible">Show GPU Specs <span class="icon"></span></button>
+        <div class="content" id="gpuSpecsTable"></div>
+    </div>
 
     <div id="results">
-        <h2>Max Memory Footprint Given Number of Concurrent Requests and Context Window of Model</h2>
-        <div id="memoryFootprintTable"></div>
+        <div class="section">
+            <h2>Estimated Memory Footprint</h2>
+            <p>It shows the memory required to serve number of concurrent requests at full context window of model.</p>
+            <div id="memoryFootprintTable"></div>
+        </div>
 
-        <h2>Capacity and Latency Given Number of GPU, Prompt Size, Response Size</h2>
-        <div id="capacityLatencyTable"></div>
+        <div class="section">
+            <h2>Estimated Capacity and Latency</h2>
+            <p>The estimation is based on the number of GPU, Prompt Size and Response Size in the calculator.</p>
+            <p><span style="color: red;">Red Row</span> indicate that model is not deployable on the number of GPUs due to Out-Of-Memory (OOM). We still compute the latency values assuming if the model is deployable.</p>
+            <div id="capacityLatencyTable"></div>
+        </div>
+    </div>
+
+    <div class="section disclaimer">
+        <h2>Disclaimer</h2>
+        <p>
+            As of now, most of the LLM are dominantly dense compute. Thus, in our calculator we are using dense computational FLOPS. Moreover, beware that the calculation is based on theoretical estimation. If you found that accelerator A is better performant than accelerator B, it doesn't mean A is faster. These are theoretical numbers which not only can never be achieved in practice - the latency and throughput depends on the actual TFLOPS efficiency (HFU) which can vary a lot from vendor to vendor or even for the same vendor's different accelerator architectures.
+        </p>
     </div>
 
     <script>
@@ -164,6 +253,9 @@
         const promptSzInput = document.getElementById('prompt_sz');
         const responseSzInput = document.getElementById('response_sz');
         const datatypeSelect = document.getElementById('datatype');
+        const ctxLengthTypeSelect = document.getElementById('ctx_length_type');
+        const customCtxLengthContainer = document.getElementById('custom_ctx_length_container');
+        const customCtxLengthInput = document.getElementById('custom_ctx_length');
 
         const useCases = {
             "Multi-turn_Chat": [1000, 4000, 200],
@@ -180,8 +272,17 @@
             const selectedUseCase = this.value;
             if (selectedUseCase in useCases) {
                 const [minPrompt, maxPrompt, avgResponse] = useCases[selectedUseCase];
-                promptSzInput.value = (minPrompt + maxPrompt) / 2;
+                // promptSzInput.value = (minPrompt + maxPrompt) / 2;
+                promptSzInput.value = maxPrompt;
                 responseSzInput.value = avgResponse;
+            }
+        });
+
+        ctxLengthTypeSelect.addEventListener('change', function() {
+            if (this.value === 'custom') {
+                customCtxLengthContainer.style.display = 'block';
+            } else {
+                customCtxLengthContainer.style.display = 'none';
             }
         });
 
@@ -189,14 +290,13 @@
             e.preventDefault();
             const formData = {
                 model_list: document.getElementById('model_list').value,
-                model_size: document.getElementById('model_size').value,
                 num_gpu: document.getElementById('num_gpu').value,
                 prompt_sz: document.getElementById('prompt_sz').value,
                 response_sz: document.getElementById('response_sz').value,
                 n_concurrent_req: document.getElementById('n_concurrent_req').value,
-                ctx_window: document.getElementById('ctx_window').value,
                 use_case: document.getElementById('use_case').value,
-                datatype: document.getElementById('datatype').value
+                datatype: document.getElementById('datatype').value,
+                ctx_window: ctxLengthTypeSelect.value === 'full' ? -1 : customCtxLengthInput.value
             };
 
             try {
@@ -249,7 +349,15 @@
                     {title: "Estimated Response Time (s)", field: "6", titleFormatter: function(cell, formatterParams, onRendered){
                         return '<div title="Estimated total time to generate the complete response Per GPU">Estimated Response Time (s) Per GPU</div>';
                     }}
-                ]
+                ],
+                rowFormatter: function(row) {
+                    var kvCacheTokens = row.getData()[2]; // Assuming "KV Cache Tokens" is the third column (index 2)
+                    if (kvCacheTokens === "OOM") {
+                        row.getElement().style.backgroundColor = "#FFCCCB"; // Light red
+                    } else if (!isNaN(kvCacheTokens)) {
+                        row.getElement().style.backgroundColor = "#90EE90"; // Light green
+                    }
+                }
             });
         }
 
@@ -294,16 +402,16 @@
             gpuSpecsTable.appendChild(table);
         }
 
-        // Collapsible functionality
+        // Updated Collapsible functionality
         const collapsible = document.querySelector(".collapsible");
-        const content = document.getElementById("gpuSpecsTable");
+        const content = document.querySelector(".content");
 
         collapsible.addEventListener("click", function() {
             this.classList.toggle("active");
-            if (content.style.display === "block") {
-                content.style.display = "none";
+            if (content.style.maxHeight) {
+                content.style.maxHeight = null;
             } else {
-                content.style.display = "block";
+                content.style.maxHeight = content.scrollHeight + "px";
             }
         });
 
