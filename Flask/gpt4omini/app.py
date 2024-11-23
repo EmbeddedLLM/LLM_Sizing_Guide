@@ -267,4 +267,4 @@ def perform_calculations(model_list, num_gpu, prompt_size, response_size, n_conc
 # if __name__ == '__main__':
 #     main()
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=False, port=7575, host="0.0.0.0")
