@@ -51,9 +51,6 @@ gpu_specs = {
     ],
 }
 
-
-
-
 OUTPUT_DIR = 'benchmark'
 
 if not os.path.exists(OUTPUT_DIR):
@@ -107,7 +104,6 @@ def calculate():
     avg_context_window = int(data['ctx_window'])
     use_case = data['use_case']
     datatype = data['datatype']  # Default to BF16 if not specified
-    # datatype = data.get('datatype', 'BF16')  # Default to BF16 if not specified
 
     # Perform calculations (adapt your main() function here)
     memory_footprint_table, capacity_latency_table = perform_calculations(
@@ -132,7 +128,6 @@ def get_gpu_specs():
     return jsonify(gpu_specs[datatype])
 
 def perform_calculations(MODEL_LIST, num_gpu, prompt_size, response_size, n_concurrent_request, avg_context_window, use_case, datatype):
-# def perform_calculations(MODEL_LIST, num_gpu, prompt_size, response_size, n_concurrent_request, avg_context_window, use_case):
     # Print input
     # print(f" Use case: {use_case}")
     use_case = "General"
