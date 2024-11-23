@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLM Performance Calculator</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tabulator-tables@4.9.3/dist/js/tabulator.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tabulator-tables@4.9.3/dist/css/tabulator.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        form {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        label {
+            display: block;
+            margin: 10px 0 5px;
+            font-weight: 700;
+        }
+        input[type="text"],
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #results {
+            margin-top: 30px;
+        }
+        h2 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .tabulator {
+            margin-top: 20px;
+        }
+        .download-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        .download-buttons button {
+            background-color: #28a745;
+        }
+        .download-buttons button:hover {
+            background-color: #218838;
+        }
+        /* Collapsible section styles */
+        .collapsible {
+            background-color: #f1f1f1;
+            color: #444;
+            cursor: pointer;
+            padding: 10px;
+            width: 100%;
+            border: none;
+            text-align: left;
+            outline: none;
+            font-size: 15px;
+            margin-top: 10px;
+        }
+        .active, .collapsible:hover {
+            background-color: #ccc;
+        }
+        .content {
+            padding: 0 18px;
+            display: none;
+            overflow: hidden;
+            background-color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>LLM Performance Calculator</h1>
+    <form id="calculatorForm">
+        <label for="model_list">MODEL_LIST (HuggingFace paths, comma-separated) e.g. meta-llama/Llama-3.1-8B-Instruct,meta-llama/Llama-3.1-70B-Instruct:</label>
+        <input type="text" id="model_list" required><br>
+
+        <label for="model_size"> Model Size (in Billion of parameters, comma-separated) e.g. 8,70:</label>
+        <input type="text" id="model_size" required><br>
+
+        <label for="num_gpu">Number of GPUs:</label>
+        <input type="number" id="num_gpu" min="1" required><br>
+
+        <label for="prompt_sz">Prompt Size (Number of Input Tokens):</label>
+        <input type="number" id="prompt_sz" min="1" required><br>
+
+        <label for="response_sz">Response Size (Number of Output Tokens):</label>
+        <input type="number" id="response_sz" min="1" required><br>
+
+        <label for="n_concurrent_req">Number of Concurrent Requests:</label>
+        <input type="number" id="n_concurrent_req" min="1" required><br>
+
+        <label for="ctx_window">Context Window:</label>
+        <input type="number" id="ctx_window" min="1" required><br>
+
+        <label for="use_case">Use Case:</label>
+        <select id="use_case">
+            <option value="">Select a use case</option>
+            <option value="Multi-turn_Chat">Multi-turn Chat</option>
+            <option value="Summarization">Summarization</option>
+            <option value="Literature_Creation">Literature Creation</option>
+            <option value="RAG">RAG</option>
+            <option value="Agentic_AI">Agentic AI</option>
+            <option value="Code_Generation">Code Generation</option>
+            <option value="Translation">Translation</option>
+            <option value="Question_Answering">Question Answering</option>
+        </select><br>
+
+        <label for="datatype">Datatype:</label>
+        <select id="datatype">
+            <option value="BF16">BF16</option>
+            <option value="FP8">FP8</option>
+        </select><br>
+
+        <button type="submit">Calculate</button>
+    </form>
+
+    <h2>Available GPU Specifications</h2>
+    <button class="collapsible">Show GPU Specs</button>
+    <div class="content" id="gpuSpecsTable"></div>
+
+    <div id="results">
+        <h2>Max Memory Footprint Given Number of Concurrent Requests and Context Window of Model</h2>
+        <div id="memoryFootprintTable"></div>
+
+        <h2>Capacity and Latency Given Number of GPU, Prompt Size, Response Size</h2>
+        <div id="capacityLatencyTable"></div>
+    </div>
+
+    <script>
+        const form = document.getElementById('calculatorForm');
+        const useCaseSelect = document.getElementById('use_case');
+        const promptSzInput = document.getElementById('prompt_sz');
+        const responseSzInput = document.getElementById('response_sz');
+        const datatypeSelect = document.getElementById('datatype');
+
+        const useCases = {
+            "Multi-turn_Chat": [1000, 4000, 200],
+            "Summarization": [2000, 8000, 300],
+            "Literature_Creation": [500, 2000, 5500],
+            "RAG": [2000, 6000, 550],
+            "Agentic_AI": [1000, 5000, 1250],
+            "Code_Generation": [500, 3000, 1050],
+            "Translation": [100, 2000, 1050],
+            "Question_Answering": [500, 3000, 275]
+        };
+
+        useCaseSelect.addEventListener('change', function() {
+            const selectedUseCase = this.value;
+            if (selectedUseCase in useCases) {
+                const [minPrompt, maxPrompt, avgResponse] = useCases[selectedUseCase];
+                promptSzInput.value = (minPrompt + maxPrompt) / 2;
+                responseSzInput.value = avgResponse;
+            }
+        });
+
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const formData = {
+                model_list: document.getElementById('model_list').value,
+                model_size: document.getElementById('model_size').value,
+                num_gpu: document.getElementById('num_gpu').value,
+                prompt_sz: document.getElementById('prompt_sz').value,
+                response_sz: document.getElementById('response_sz').value,
+                n_concurrent_req: document.getElementById('n_concurrent_req').value,
+                ctx_window: document.getElementById('ctx_window').value,
+                use_case: document.getElementById('use_case').value,
+                datatype: document.getElementById('datatype').value
+            };
+
+            try {
+                const response = await axios.post('/calculate', formData);
+                displayResults(response.data);
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        });
+
+        function displayResults(data) {
+            // Display Memory Footprint table
+            new Tabulator("#memoryFootprintTable", {
+                data: data.memory_footprint,
+                columns: [
+                    {title: "Model", field: "0", titleFormatter: function(cell, formatterParams, onRendered){
+                        return '<div title="The name of the LLM model">Model</div>';
+                    }},
+                    {title: "KV Cache Size per Token (GiB/token)", field: "1", titleFormatter: function(cell, formatterParams, onRendered){
+                        return '<div title="Key-Value cache size required for each token">KV Cache Size per Token (GiB/token)</div>';
+                    }},
+                    {title: "Memory Footprint (GB)", field: "2", titleFormatter: function(cell, formatterParams, onRendered){
+                        return '<div title="Total memory usage of the model">Memory Footprint (GB)</div>';
+                    }}
+                ]
+            });
+
+            // Display Capacity and Latency table
+            new Tabulator("#capacityLatencyTable", {
+                data: data.capacity_latency,
+                columns: [
+                    {title: "Model", field: "0", titleFormatter: function(cell, formatterParams, onRendered){
+                        return '<div title="The name of the LLM model">Model</div>';
+                    }},
+                    {title: "GPU", field: "1", titleFormatter: function(cell, formatterParams, onRendered){
+                        return '<div title="The GPU configuration used">GPU</div>';
+                    }},
+                    {title: "KV Cache Tokens", field: "2", titleFormatter: function(cell, formatterParams, onRendered){
+                        return '<div title="Number of tokens that can be stored in the Key-Value cache">KV Cache Tokens</div>';
+                    }},
+                    {title: "Prefill Time (ms)", field: "3", titleFormatter: function(cell, formatterParams, onRendered){
+                        return '<div title="Time taken to process the initial prompt Per Token Per GPU">Prefill Time (ms) Per Token Per GPU</div>';
+                    }},
+                    {title: "Generation Time (ms)", field: "4", titleFormatter: function(cell, formatterParams, onRendered){
+                        return '<div title="Time taken to generate each token in the response Per Token Per GPU">Generation Time (ms) Per Token Per GPU</div>';
+                    }},
+                    {title: "Estimated TTFT (s)", field: "5", titleFormatter: function(cell, formatterParams, onRendered){
+                        return '<div title="Estimated Time To First Token - time until the first response token is generated Per GPU">Estimated TTFT (s) Per GPU</div>';
+                    }},
+                    {title: "Estimated Response Time (s)", field: "6", titleFormatter: function(cell, formatterParams, onRendered){
+                        return '<div title="Estimated total time to generate the complete response Per GPU">Estimated Response Time (s) Per GPU</div>';
+                    }}
+                ]
+            });
+        }
+
+        async function fetchGpuSpecs() {
+            try {
+                const response = await axios.get('/gpu_specs', {
+                    params: { datatype: document.getElementById('datatype').value }
+                });
+                console.log(response.data);
+                displayGpuSpecs(response.data);
+            } catch (error) {
+                console.error('Error fetching GPU specs:', error);
+            }
+        }
+
+        function displayGpuSpecs(gpuSpecs) {
+            const gpuSpecsTable = document.getElementById('gpuSpecsTable');
+            
+            // Clear existing content
+            gpuSpecsTable.innerHTML = '';
+            const table = document.createElement('table');
+            table.style.width = '100%';
+            table.style.borderCollapse = 'collapse';
+            table.innerHTML = `
+                <tr>
+                    <th style="border: 1px solid #ccc; padding: 8px;">GPU Name</th>
+                    <th style="border: 1px solid #ccc; padding: 8px;">${document.getElementById('datatype').value} TFLOPS</th>
+                    <th style="border: 1px solid #ccc; padding: 8px;">Memory (GB)</th>
+                    <th style="border: 1px solid #ccc; padding: 8px;">Memory Bandwidth (Gbps)</th>
+                </tr>
+            `;
+            gpuSpecs.forEach(gpu => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td style="border: 1px solid #ccc; padding: 8px;">${gpu.name}</td>
+                    <td style="border: 1px solid #ccc; padding: 8px;">${gpu.fp16_tflops}</td>
+                    <td style="border: 1px solid #ccc; padding: 8px;">${gpu.memory_gb}</td>
+                    <td style="border: 1px solid #ccc; padding: 8px;">${gpu.memory_bandwidth_gbps}</td>
+                `;
+                table.appendChild(row);
+            });
+            gpuSpecsTable.appendChild(table);
+        }
+
+        // Collapsible functionality
+        const collapsible = document.querySelector(".collapsible");
+        const content = document.getElementById("gpuSpecsTable");
+
+        collapsible.addEventListener("click", function() {
+            this.classList.toggle("active");
+            if (content.style.display === "block") {
+                content.style.display = "none";
+            } else {
+                content.style.display = "block";
+            }
+        });
+
+        // Fetch GPU specs when the page loads
+        fetchGpuSpecs();
+        datatypeSelect.addEventListener('change', fetchGpuSpecs);
+    </script>
+</body>
+</html>
