@@ -1,423 +1,517 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>LLM Performance Estimation Calculator</title>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/tabulator-tables@4.9.3/dist/js/tabulator.min.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/tabulator-tables@4.9.3/dist/css/tabulator.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link
+      href="https://cdn.jsdelivr.net/npm/tabulator-tables@4.9.3/dist/css/tabulator.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
     <style>
-        body {
-            font-family: 'Roboto', sans-serif;
-            background-color: #f4f4f4;
-            margin: 0;
-            padding: 20px;
-        }
-        h1 {
-            text-align: center;
-            color: #333;
-        }
-        form {
-            background: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            max-width: 600px;
-            margin: 0 auto;
-        }
-        label {
-            display: block;
-            margin: 10px 0 5px;
-            font-weight: 700;
-        }
-        input[type="text"],
-        input[type="number"],
-        select {
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 15px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
-        button {
-            background-color: #007bff;
-            color: white;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-            width: 100%;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-        #results {
-            margin-top: 30px;
-        }
-        h2 {
-            color: #333;
-            margin-bottom: 10px;
-        }
-        .tabulator {
-            margin-top: 20px;
-        }
-        .download-buttons {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 20px;
-        }
-        .download-buttons button {
-            background-color: #28a745;
-        }
-        .download-buttons button:hover {
-            background-color: #218838;
-        }
-        
-        /* Updated Collapsible section styles */
-        .collapsible {
-            background-color: #007bff;
-            color: white;
-            cursor: pointer;
-            padding: 18px;
-            width: 100%;
-            border: none;
-            text-align: left;
-            outline: none;
-            font-size: 18px;
-            font-weight: bold;
-            margin-top: 20px;
-            border-radius: 8px;
-            transition: 0.3s;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+      body {
+        font-family: "Roboto", sans-serif;
+        background-color: #f4f4f4;
+        margin: 0;
+        padding: 20px;
+      }
+      h1 {
+        text-align: center;
+        color: #333;
+      }
+      form {
+        background: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        max-width: 600px;
+        margin: 0 auto;
+      }
+      label {
+        display: block;
+        margin: 10px 0 5px;
+        font-weight: 700;
+      }
+      input[type="text"],
+      input[type="number"],
+      select {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 15px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box;
+      }
+      button {
+        background-color: #007bff;
+        color: white;
+        padding: 10px 15px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+        width: 100%;
+      }
+      button:hover {
+        background-color: #0056b3;
+      }
+      #results {
+        margin-top: 30px;
+      }
+      h2 {
+        color: #333;
+        margin-bottom: 10px;
+      }
+      .tabulator {
+        margin-top: 20px;
+      }
+      .download-buttons {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 20px;
+      }
+      .download-buttons button {
+        background-color: #28a745;
+      }
+      .download-buttons button:hover {
+        background-color: #218838;
+      }
 
-        .collapsible:after {
-            content: '\002B';
-            color: white;
-            font-weight: bold;
-            float: right;
-            margin-left: 5px;
-            font-size: 22px;
-        }
+      /* Updated Collapsible section styles */
+      .collapsible {
+        background-color: #007bff;
+        color: white;
+        cursor: pointer;
+        padding: 18px;
+        width: 100%;
+        border: none;
+        text-align: left;
+        outline: none;
+        font-size: 18px;
+        font-weight: bold;
+        margin-top: 20px;
+        border-radius: 8px;
+        transition: 0.3s;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
 
-        .active, .collapsible:hover {
-            background-color: #0056b3;
-        }
+      .collapsible:after {
+        content: "\002B";
+        color: white;
+        font-weight: bold;
+        float: right;
+        margin-left: 5px;
+        font-size: 22px;
+      }
 
-        .active:after {
-            content: "\2212";
-        }
+      .active,
+      .collapsible:hover {
+        background-color: #0056b3;
+      }
 
-        .content {
-            padding: 0 18px;
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.2s ease-out;
-            background-color: #f1f1f1;
-            border-radius: 0 0 8px 8px;
-        }
+      .active:after {
+        content: "\2212";
+      }
 
-        /* New styles for section distinction */
-        .section {
-            background-color: #ffffff;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            margin-bottom: 30px;
-            padding: 20px;
-            margin-top: 40px;
-        }
+      .content {
+        padding: 0 18px;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.2s ease-out;
+        background-color: #f1f1f1;
+        border-radius: 0 0 8px 8px;
+      }
 
-        .section h2 {
-            color: #007bff;
-            border-bottom: 2px solid #007bff;
-            padding-bottom: 10px;
-            margin-top: 0;
-        }
+      /* New styles for section distinction */
+      .section {
+        background-color: #ffffff;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 30px;
+        padding: 20px;
+        margin-top: 40px;
+      }
 
-        #memoryFootprintTable, #capacityLatencyTable {
-            margin-top: 15px;
-        }
+      .section h2 {
+        color: #007bff;
+        border-bottom: 2px solid #007bff;
+        padding-bottom: 10px;
+        margin-top: 0;
+      }
 
-        .tabulator {
-            border: 1px solid #dee2e6;
-        }
+      #memoryFootprintTable,
+      #capacityLatencyTable {
+        margin-top: 15px;
+      }
 
-        .disclaimer {
-            background-color: #fff3cd;
-            border: 1px solid #ffeeba;
-            border-radius: 8px;
-            padding: 15px;
-            margin-top: 30px;
-            margin-bottom: 20px;
-        }
+      .tabulator {
+        border: 1px solid #dee2e6;
+      }
 
-        .disclaimer h2 {
-            color: #856404;
-            margin-top: 0;
-        }
+      .disclaimer {
+        background-color: #fff3cd;
+        border: 1px solid #ffeeba;
+        border-radius: 8px;
+        padding: 15px;
+        margin-top: 30px;
+        margin-bottom: 20px;
+      }
 
-        .disclaimer p {
-            color: #856404;
-            margin-bottom: 0;
-        }
+      .disclaimer h2 {
+        color: #856404;
+        margin-top: 0;
+      }
+
+      .disclaimer p {
+        color: #856404;
+        margin-bottom: 0;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <h1>LLM Performance Estimation Calculator</h1>
     <form id="calculatorForm">
-        <label for="model_list">Model List (HuggingFace paths, comma-separated) e.g. meta-llama/Llama-3.1-8B-Instruct,meta-llama/Llama-3.1-70B-Instruct:</label>
-        <input type="text" id="model_list" value="meta-llama/Llama-3.1-70B-Instruct,meta-llama/Llama-3.1-405B-Instruct" required><br>
+      <label for="model_list"
+        >Model List (HuggingFace paths, comma-separated) e.g.
+        meta-llama/Llama-3.1-8B-Instruct,meta-llama/Llama-3.1-70B-Instruct:</label
+      >
+      <input
+        type="text"
+        id="model_list"
+        value="meta-llama/Llama-3.1-70B-Instruct,meta-llama/Llama-3.1-405B-Instruct"
+        required
+      /><br />
 
-        <label for="num_gpu">Number of GPUs:</label>
-        <input type="number" id="num_gpu" min="1" value="8" required><br>
+      <label for="num_gpu">Number of GPUs:</label>
+      <input type="number" id="num_gpu" min="1" value="8" required /><br />
 
-        <label for="use_case">Use Case:</label>
-        <select id="use_case">
-            <option value="">Select a use case</option>
-            <option value="Multi-turn_Chat">Multi-turn Chat</option>
-            <option value="Summarization">Summarization</option>
-            <option value="Literature_Creation">Literature Creation</option>
-            <option value="RAG">RAG</option>
-            <option value="Agentic_AI">Agentic AI</option>
-            <option value="Code_Generation">Code Generation</option>
-            <option value="Translation">Translation</option>
-            <option value="Question_Answering">Question Answering</option>
-        </select><br>
+      <label for="use_case">Use Case:</label>
+      <select id="use_case">
+        <option value="">Select a use case</option>
+        <option value="Multi-turn_Chat">Multi-turn Chat</option>
+        <option value="Summarization">Summarization</option>
+        <option value="Literature_Creation">Literature Creation</option>
+        <option value="RAG">RAG</option>
+        <option value="Agentic_AI">Agentic AI</option>
+        <option value="Code_Generation">Code Generation</option>
+        <option value="Translation">Translation</option>
+        <option value="Question_Answering">Question Answering</option></select
+      ><br />
 
-        <label for="prompt_sz">Prompt Size (Number of Input Tokens):</label>
-        <input type="number" id="prompt_sz" min="1" required><br>
+      <label for="prompt_sz">Prompt Size (Number of Input Tokens):</label>
+      <input type="number" id="prompt_sz" min="1" required /><br />
 
-        <label for="response_sz">Response Size (Number of Output Tokens):</label>
-        <input type="number" id="response_sz" min="1" required><br>
+      <label for="response_sz">Response Size (Number of Output Tokens):</label>
+      <input type="number" id="response_sz" min="1" required /><br />
 
-        <label for="n_concurrent_req">Number of Concurrent Requests:</label>
-        <input type="number" id="n_concurrent_req" min="1" value="16" required><br>
+      <label for="n_concurrent_req">Number of Concurrent Requests:</label>
+      <input
+        type="number"
+        id="n_concurrent_req"
+        min="1"
+        value="16"
+        required
+      /><br />
 
-        <label for="ctx_length_type">Context Length Type:</label>
-        <select id="ctx_length_type">
-            <option value="full">Full Model Context Length</option>
-            <option value="custom">Custom Context Length</option>
-        </select><br>
+      <label for="ctx_length_type">Context Length Type:</label>
+      <select id="ctx_length_type">
+        <option value="full">Full Model Context Length</option>
+        <option value="custom">Custom Context Length</option></select
+      ><br />
 
-        <div id="custom_ctx_length_container" style="display: none;">
-            <label for="custom_ctx_length">Custom Context Length:</label>
-            <input type="number" id="custom_ctx_length" min="1" value="8192" required><br>
-        </div>
+      <div id="custom_ctx_length_container" style="display: none">
+        <label for="custom_ctx_length">Custom Context Length:</label>
+        <input
+          type="number"
+          id="custom_ctx_length"
+          min="1"
+          value="8192"
+          required
+        /><br />
+      </div>
 
-        <label for="datatype">Datatype:</label>
-        <select id="datatype">
-            <option value="BF16">BF16</option>
-            <option value="FP8">FP8</option>
-        </select><br>
+      <label for="datatype">Datatype:</label>
+      <select id="datatype">
+        <option value="BF16">BF16</option>
+        <option value="FP8">FP8</option></select
+      ><br />
 
-        <button type="submit">Calculate</button>
+      <button type="submit">Calculate</button>
     </form>
 
     <div class="section">
-        <h2>Available GPU Specifications</h2>
-        <button class="collapsible">Show GPU Specs <span class="icon"></span></button>
-        <div class="content" id="gpuSpecsTable"></div>
+      <h2>Available GPU Specifications</h2>
+      <button class="collapsible">
+        Show GPU Specs <span class="icon"></span>
+      </button>
+      <div class="content" id="gpuSpecsTable"></div>
     </div>
 
     <div id="results">
-        <div class="section">
-            <h2>Estimated Memory Footprint</h2>
-            <p>It shows the memory required to serve number of concurrent requests at full context window of model.</p>
-            <div id="memoryFootprintTable"></div>
-        </div>
+      <div class="section">
+        <h2>Estimated Memory Footprint</h2>
+        <p>
+          It shows the memory required to serve number of concurrent requests at
+          full context window of model.
+        </p>
+        <div id="memoryFootprintTable"></div>
+      </div>
 
-        <div class="section">
-            <h2>Estimated Capacity and Latency</h2>
-            <p>The estimation is based on the number of GPU, Prompt Size and Response Size in the calculator.</p>
-            <p><span style="color: red;">Red Row</span> indicate that model is not deployable on the number of GPUs due to Out-Of-Memory (OOM). We still compute the latency values assuming if the model is deployable.</p>
-            <div id="capacityLatencyTable"></div>
-        </div>
+      <div class="section">
+        <h2>Estimated Capacity and Latency</h2>
+        <p>
+          The estimation is based on the number of GPU, Prompt Size and Response
+          Size in the calculator.
+        </p>
+        <p>
+          <span style="color: red">Red Row</span> indicate that model is not
+          deployable on the number of GPUs due to Out-Of-Memory (OOM). We still
+          compute the latency values assuming if the model is deployable.
+        </p>
+        <div id="capacityLatencyTable"></div>
+      </div>
     </div>
 
     <div class="section disclaimer">
-        <h2>Disclaimer</h2>
-        <p>
-            As of now, most of the LLM are dominantly dense compute. Thus, in our calculator we are using dense computational FLOPS. Moreover, beware that the calculation is based on theoretical estimation. If you found that accelerator A is better performant than accelerator B, it doesn't mean A is faster. These are theoretical numbers which not only can never be achieved in practice - the latency and throughput depends on the actual TFLOPS efficiency (HFU) which can vary a lot from vendor to vendor or even for the same vendor's different accelerator architectures.
-        </p>
+      <h2>Disclaimer</h2>
+      <p>
+        As of now, most of the LLM are dominantly dense compute. Thus, in our
+        calculator we are using dense computational FLOPS. Moreover, beware that
+        the calculation is based on theoretical estimation. If you found that
+        accelerator A is better performant than accelerator B, it doesn't mean A
+        is faster. These are theoretical numbers which not only can never be
+        achieved in practice - the latency and throughput depends on the actual
+        TFLOPS efficiency (HFU) which can vary a lot from vendor to vendor or
+        even for the same vendor's different accelerator architectures.
+      </p>
     </div>
 
     <script>
-        const form = document.getElementById('calculatorForm');
-        const useCaseSelect = document.getElementById('use_case');
-        const promptSzInput = document.getElementById('prompt_sz');
-        const responseSzInput = document.getElementById('response_sz');
-        const datatypeSelect = document.getElementById('datatype');
-        const ctxLengthTypeSelect = document.getElementById('ctx_length_type');
-        const customCtxLengthContainer = document.getElementById('custom_ctx_length_container');
-        const customCtxLengthInput = document.getElementById('custom_ctx_length');
+      const form = document.getElementById("calculatorForm");
+      const useCaseSelect = document.getElementById("use_case");
+      const promptSzInput = document.getElementById("prompt_sz");
+      const responseSzInput = document.getElementById("response_sz");
+      const datatypeSelect = document.getElementById("datatype");
+      const ctxLengthTypeSelect = document.getElementById("ctx_length_type");
+      const customCtxLengthContainer = document.getElementById(
+        "custom_ctx_length_container"
+      );
+      const customCtxLengthInput = document.getElementById("custom_ctx_length");
 
-        const useCases = {
-            "Multi-turn_Chat": [1000, 4000, 200],
-            "Summarization": [2000, 8000, 300],
-            "Literature_Creation": [500, 2000, 5500],
-            "RAG": [2000, 6000, 550],
-            "Agentic_AI": [1000, 5000, 1250],
-            "Code_Generation": [500, 3000, 1050],
-            "Translation": [100, 2000, 1050],
-            "Question_Answering": [500, 3000, 275]
+      const useCases = {
+        "Multi-turn_Chat": [1000, 4000, 200],
+        Summarization: [2000, 8000, 300],
+        Literature_Creation: [500, 2000, 5500],
+        RAG: [2000, 6000, 550],
+        Agentic_AI: [1000, 5000, 1250],
+        Code_Generation: [500, 3000, 1050],
+        Translation: [100, 2000, 1050],
+        Question_Answering: [500, 3000, 275],
+      };
+
+      useCaseSelect.addEventListener("change", function () {
+        const selectedUseCase = this.value;
+        if (selectedUseCase in useCases) {
+          const [minPrompt, maxPrompt, avgResponse] = useCases[selectedUseCase];
+          // promptSzInput.value = (minPrompt + maxPrompt) / 2;
+          promptSzInput.value = maxPrompt;
+          responseSzInput.value = avgResponse;
+        }
+      });
+
+      ctxLengthTypeSelect.addEventListener("change", function () {
+        if (this.value === "custom") {
+          customCtxLengthContainer.style.display = "block";
+        } else {
+          customCtxLengthContainer.style.display = "none";
+        }
+      });
+
+      form.addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const formData = {
+          model_list: document.getElementById("model_list").value,
+          num_gpu: document.getElementById("num_gpu").value,
+          prompt_sz: document.getElementById("prompt_sz").value,
+          response_sz: document.getElementById("response_sz").value,
+          n_concurrent_req: document.getElementById("n_concurrent_req").value,
+          use_case: document.getElementById("use_case").value,
+          datatype: document.getElementById("datatype").value,
+          ctx_window:
+            ctxLengthTypeSelect.value === "full"
+              ? -1
+              : customCtxLengthInput.value,
         };
 
-        useCaseSelect.addEventListener('change', function() {
-            const selectedUseCase = this.value;
-            if (selectedUseCase in useCases) {
-                const [minPrompt, maxPrompt, avgResponse] = useCases[selectedUseCase];
-                // promptSzInput.value = (minPrompt + maxPrompt) / 2;
-                promptSzInput.value = maxPrompt;
-                responseSzInput.value = avgResponse;
-            }
-        });
-
-        ctxLengthTypeSelect.addEventListener('change', function() {
-            if (this.value === 'custom') {
-                customCtxLengthContainer.style.display = 'block';
-            } else {
-                customCtxLengthContainer.style.display = 'none';
-            }
-        });
-
-        form.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const formData = {
-                model_list: document.getElementById('model_list').value,
-                num_gpu: document.getElementById('num_gpu').value,
-                prompt_sz: document.getElementById('prompt_sz').value,
-                response_sz: document.getElementById('response_sz').value,
-                n_concurrent_req: document.getElementById('n_concurrent_req').value,
-                use_case: document.getElementById('use_case').value,
-                datatype: document.getElementById('datatype').value,
-                ctx_window: ctxLengthTypeSelect.value === 'full' ? -1 : customCtxLengthInput.value
-            };
-
-            try {
-                const response = await axios.post('/calculate', formData);
-                displayResults(response.data);
-            } catch (error) {
-                console.error('Error:', error);
-            }
-        });
-
-        function displayResults(data) {
-            // Display Memory Footprint table
-            new Tabulator("#memoryFootprintTable", {
-                data: data.memory_footprint,
-                columns: [
-                    {title: "Model", field: "0", titleFormatter: function(cell, formatterParams, onRendered){
-                        return '<div title="The name of the LLM model">Model</div>';
-                    }},
-                    {title: "KV Cache Size per Token (GiB/token)", field: "1", titleFormatter: function(cell, formatterParams, onRendered){
-                        return '<div title="Key-Value cache size required for each token">KV Cache Size per Token (GiB/token)</div>';
-                    }},
-                    {title: "Memory Footprint (GB)", field: "2", titleFormatter: function(cell, formatterParams, onRendered){
-                        return '<div title="Total memory usage of the model">Memory Footprint (GB)</div>';
-                    }}
-                ]
-            });
-
-            // Display Capacity and Latency table
-            new Tabulator("#capacityLatencyTable", {
-                data: data.capacity_latency,
-                columns: [
-                    {title: "Model", field: "0", titleFormatter: function(cell, formatterParams, onRendered){
-                        return '<div title="The name of the LLM model">Model</div>';
-                    }},
-                    {title: "GPU", field: "1", titleFormatter: function(cell, formatterParams, onRendered){
-                        return '<div title="The GPU configuration used">GPU</div>';
-                    }},
-                    {title: "KV Cache Tokens", field: "2", titleFormatter: function(cell, formatterParams, onRendered){
-                        return '<div title="Number of tokens that can be stored in the Key-Value cache">KV Cache Tokens</div>';
-                    }},
-                    {title: "Prefill Time (ms)", field: "3", titleFormatter: function(cell, formatterParams, onRendered){
-                        return '<div title="Time taken to process the initial prompt Per Token Per GPU">Prefill Time (ms) Per Token Per GPU</div>';
-                    }},
-                    {title: "Generation Time (ms)", field: "4", titleFormatter: function(cell, formatterParams, onRendered){
-                        return '<div title="Time taken to generate each token in the response Per Token Per GPU">Generation Time (ms) Per Token Per GPU</div>';
-                    }},
-                    {title: "Estimated TTFT (s)", field: "5", titleFormatter: function(cell, formatterParams, onRendered){
-                        return '<div title="Estimated Time To First Token - time until the first response token is generated Per GPU">Estimated TTFT (s) Per GPU</div>';
-                    }},
-                    {title: "Estimated Response Time (s)", field: "6", titleFormatter: function(cell, formatterParams, onRendered){
-                        return '<div title="Estimated total time to generate the complete response Per GPU">Estimated Response Time (s) Per GPU</div>';
-                    }}
-                ],
-                rowFormatter: function(row) {
-                    var kvCacheTokens = row.getData()[2]; // Assuming "KV Cache Tokens" is the third column (index 2)
-                    if (kvCacheTokens === "OOM") {
-                        row.getElement().style.backgroundColor = "#FFCCCB"; // Light red
-                    } else if (!isNaN(kvCacheTokens)) {
-                        row.getElement().style.backgroundColor = "#90EE90"; // Light green
-                    }
-                }
-            });
+        try {
+          const response = await axios.post("/calculate", formData);
+          displayResults(response.data);
+        } catch (error) {
+          console.error("Error:", error);
         }
+      });
 
-        async function fetchGpuSpecs() {
-            try {
-                const response = await axios.get('/gpu_specs', {
-                    params: { datatype: document.getElementById('datatype').value }
-                });
-                console.log(response.data);
-                displayGpuSpecs(response.data);
-            } catch (error) {
-                console.error('Error fetching GPU specs:', error);
+      function displayResults(data) {
+        // Display Memory Footprint table
+        new Tabulator("#memoryFootprintTable", {
+          data: data.memory_footprint,
+          columns: [
+            {
+              title: "Model",
+              field: "0",
+              titleFormatter: function (cell, formatterParams, onRendered) {
+                return '<div title="The name of the LLM model">Model</div>';
+              },
+            },
+            {
+              title: "KV Cache Size per Token (GiB/token)",
+              field: "1",
+              titleFormatter: function (cell, formatterParams, onRendered) {
+                return '<div title="Key-Value cache size required for each token">KV Cache Size per Token (GiB/token)</div>';
+              },
+            },
+            {
+              title: "Memory Footprint (GB)",
+              field: "2",
+              titleFormatter: function (cell, formatterParams, onRendered) {
+                return '<div title="Total memory usage of the model">Memory Footprint (GB)</div>';
+              },
+            },
+          ],
+        });
+
+        // Display Capacity and Latency table
+        new Tabulator("#capacityLatencyTable", {
+          data: data.capacity_latency,
+          columns: [
+            {
+              title: "Model",
+              field: "0",
+              titleFormatter: function (cell, formatterParams, onRendered) {
+                return '<div title="The name of the LLM model">Model</div>';
+              },
+            },
+            {
+              title: "GPU",
+              field: "1",
+              titleFormatter: function (cell, formatterParams, onRendered) {
+                return '<div title="The GPU configuration used">GPU</div>';
+              },
+            },
+            {
+              title: "KV Cache Tokens",
+              field: "2",
+              titleFormatter: function (cell, formatterParams, onRendered) {
+                return '<div title="Number of tokens that can be stored in the Key-Value cache">KV Cache Tokens</div>';
+              },
+            },
+            {
+              title: "Prefill Time (ms)",
+              field: "3",
+              titleFormatter: function (cell, formatterParams, onRendered) {
+                return '<div title="Time taken to process the initial prompt Per Token Per GPU">Prefill Time (ms) Per Token Per GPU</div>';
+              },
+            },
+            {
+              title: "Generation Time (ms)",
+              field: "4",
+              titleFormatter: function (cell, formatterParams, onRendered) {
+                return '<div title="Time taken to generate each token in the response Per Token Per GPU">Generation Time (ms) Per Token Per GPU</div>';
+              },
+            },
+            {
+              title: "Estimated TTFT (s)",
+              field: "5",
+              titleFormatter: function (cell, formatterParams, onRendered) {
+                return '<div title="Estimated Time To First Token - time until the first response token is generated Per GPU">Estimated TTFT (s) Per GPU</div>';
+              },
+            },
+            {
+              title: "Estimated Response Time (s)",
+              field: "6",
+              titleFormatter: function (cell, formatterParams, onRendered) {
+                return '<div title="Estimated total time to generate the complete response Per GPU">Estimated Response Time (s) Per GPU</div>';
+              },
+            },
+          ],
+          rowFormatter: function (row) {
+            var kvCacheTokens = row.getData()[2]; // Assuming "KV Cache Tokens" is the third column (index 2)
+            if (kvCacheTokens === "OOM") {
+              row.getElement().style.backgroundColor = "#FFCCCB"; // Light red
+            } else if (!isNaN(kvCacheTokens)) {
+              row.getElement().style.backgroundColor = "#90EE90"; // Light green
             }
-        }
+          },
+        });
+      }
 
-        function displayGpuSpecs(gpuSpecs) {
-            const gpuSpecsTable = document.getElementById('gpuSpecsTable');
-            
-            // Clear existing content
-            gpuSpecsTable.innerHTML = '';
-            const table = document.createElement('table');
-            table.style.width = '100%';
-            table.style.borderCollapse = 'collapse';
-            table.innerHTML = `
+      async function fetchGpuSpecs() {
+        try {
+          const response = await axios.get("/gpu_specs", {
+            params: { datatype: document.getElementById("datatype").value },
+          });
+          console.log(response.data);
+          displayGpuSpecs(response.data);
+        } catch (error) {
+          console.error("Error fetching GPU specs:", error);
+        }
+      }
+
+      function displayGpuSpecs(gpuSpecs) {
+        const gpuSpecsTable = document.getElementById("gpuSpecsTable");
+
+        // Clear existing content
+        gpuSpecsTable.innerHTML = "";
+        const table = document.createElement("table");
+        table.style.width = "100%";
+        table.style.borderCollapse = "collapse";
+        table.innerHTML = `
                 <tr>
                     <th style="border: 1px solid #ccc; padding: 8px;">GPU Name</th>
-                    <th style="border: 1px solid #ccc; padding: 8px;">${document.getElementById('datatype').value} TFLOPS</th>
+                    <th style="border: 1px solid #ccc; padding: 8px;">${
+                      document.getElementById("datatype").value
+                    } TFLOPS</th>
                     <th style="border: 1px solid #ccc; padding: 8px;">Memory (GB)</th>
                     <th style="border: 1px solid #ccc; padding: 8px;">Memory Bandwidth (Gbps)</th>
                 </tr>
             `;
-            gpuSpecs.forEach(gpu => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
+        gpuSpecs.forEach((gpu) => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
                     <td style="border: 1px solid #ccc; padding: 8px;">${gpu.name}</td>
                     <td style="border: 1px solid #ccc; padding: 8px;">${gpu.fp16_tflops}</td>
                     <td style="border: 1px solid #ccc; padding: 8px;">${gpu.memory_gb}</td>
                     <td style="border: 1px solid #ccc; padding: 8px;">${gpu.memory_bandwidth_gbps}</td>
                 `;
-                table.appendChild(row);
-            });
-            gpuSpecsTable.appendChild(table);
-        }
-
-        // Updated Collapsible functionality
-        const collapsible = document.querySelector(".collapsible");
-        const content = document.querySelector(".content");
-
-        collapsible.addEventListener("click", function() {
-            this.classList.toggle("active");
-            if (content.style.maxHeight) {
-                content.style.maxHeight = null;
-            } else {
-                content.style.maxHeight = content.scrollHeight + "px";
-            }
+          table.appendChild(row);
         });
+        gpuSpecsTable.appendChild(table);
+      }
 
-        // Fetch GPU specs when the page loads
-        fetchGpuSpecs();
-        datatypeSelect.addEventListener('change', fetchGpuSpecs);
+      // Updated Collapsible functionality
+      const collapsible = document.querySelector(".collapsible");
+      const content = document.querySelector(".content");
+
+      collapsible.addEventListener("click", function () {
+        this.classList.toggle("active");
+        if (content.style.maxHeight) {
+          content.style.maxHeight = null;
+        } else {
+          content.style.maxHeight = content.scrollHeight + "px";
+        }
+      });
+
+      // Fetch GPU specs when the page loads
+      fetchGpuSpecs();
+      datatypeSelect.addEventListener("change", fetchGpuSpecs);
     </script>
-</body>
+  </body>
 </html>

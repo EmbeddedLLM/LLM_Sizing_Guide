@@ -257,7 +257,7 @@ def create_app(test_config=None):
         for model in model_specs:
             kv_cache_size = calc_kv_cache_size_per_token(model['n_layers'], model['d_model'], byte_factor)
             for gpu in gpu_specs[datatype]:  # Use the correct GPU specs based on datatype
-                kv_cache_tokens = calc_kv_cache_tokens(num_gpu, gpu['memory_gb'], model['params_billion'], kv_cache_size, byte_factor)
+                kv_cache_tokens = int(calc_kv_cache_tokens(num_gpu, gpu['memory_gb'], model['params_billion'], kv_cache_size, byte_factor))
                 prefill_time_per_token = calc_prefill_time_per_token(num_gpu, model['params_billion'], gpu['fp16_tflops'], byte_factor)
                 generation_time_per_token = calc_generation_time_per_token(num_gpu, model['params_billion'], gpu['memory_bandwidth_gbps'], byte_factor)
                 estimated_ttft = calc_estimated_ttft_time(prefill_time_per_token, generation_time_per_token, prompt_size, response_size)

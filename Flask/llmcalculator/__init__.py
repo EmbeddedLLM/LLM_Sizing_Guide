@@ -31,7 +31,7 @@ def create_app(test_config=None):
             {"name": "Intel Gaudi 3", "fp16_tflops": 1835, "memory_gb": 128, "memory_bandwidth_gbps": 3700},
             {"name": "AMD MI300X", "fp16_tflops": 2610, "memory_gb": 192, "memory_bandwidth_gbps": 5300},
             {"name": "AMD MI325X", "fp16_tflops": 2610, "memory_gb": 256, "memory_bandwidth_gbps": 6000},
-            {"name": "AMD H200 SXM", "fp16_tflops": 1979, "memory_gb": 141, "memory_bandwidth_gbps": 4800},
+            {"name": "H200 SXM", "fp16_tflops": 1979, "memory_gb": 141, "memory_bandwidth_gbps": 4800},
             # Add or comment out GPU types as needed
         ],
         "BF16": [
@@ -53,7 +53,7 @@ def create_app(test_config=None):
             # {"name": "AMD MI250X", "fp16_tflops": 383, "memory_gb": 128, "memory_bandwidth_gbps": 3280},
             {"name": "AMD MI300X", "fp16_tflops": 1300, "memory_gb": 192, "memory_bandwidth_gbps": 5300},
             {"name": "AMD MI325X", "fp16_tflops": 1307.4, "memory_gb": 256, "memory_bandwidth_gbps": 6000},
-            {"name": "AMD H200 SXM", "fp16_tflops": 989, "memory_gb": 141, "memory_bandwidth_gbps": 4800},
+            {"name": "H200 SXM", "fp16_tflops": 989, "memory_gb": 141, "memory_bandwidth_gbps": 4800},
             {"name": "Google TPU v4", "fp16_tflops": 275, "memory_gb": 32, "memory_bandwidth_gbps": 1200},
             {"name": "Google TPU v5e", "fp16_tflops": 197, "memory_gb": 16, "memory_bandwidth_gbps": 1600},
             {"name": "Google TPU v5p", "fp16_tflops": 459, "memory_gb": 95, "memory_bandwidth_gbps": 4800},
@@ -262,6 +262,8 @@ def create_app(test_config=None):
                 generation_time_per_token = calc_generation_time_per_token(num_gpu, model['params_billion'], gpu['memory_bandwidth_gbps'], byte_factor)
                 estimated_ttft = calc_estimated_ttft_time(prefill_time_per_token, generation_time_per_token, prompt_size, response_size)
                 estimated_response_time = calc_estimated_response_time(prefill_time_per_token, generation_time_per_token, prompt_size, response_size)
+                if not kv_cache_tokens == "OOM":
+                    kv_cache_tokens = int(kv_cache_tokens)
                 capacity_latency_table.append([model['name'], gpu['name'], f"{kv_cache_tokens}", f"{prefill_time_per_token:.3f}", f"{generation_time_per_token:.3f}", f"{estimated_ttft:.3f}", f"{estimated_response_time:.3f}"])
         # print(tabulate(capacity_latency_table, headers=['Model', 'GPU', 'KV Cache Tokens', 'Prefill Time (ms)', 'Generation Time (ms)', 'Estimated Time To First Token (TTFT) (s)', 'Estimated Response Time (s)'], tablefmt='orgtbl'))
         # Save capacity and latency table
