@@ -27,7 +27,7 @@ run_benchmark() {
     local ctx_window=$6
 
     echo "Running benchmark for $use_case with $num_gpu GPUs, prompt size $prompt_sz, response size $response_sz, $n_concurrent_req concurrent requests, and context window $ctx_window"
-    HF_TOKEN=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 python LLM_size_pef_calculator_hf_autoconfig.py \
+    HF_TOKEN=<> python LLM_size_pef_calculator_hf_autoconfig.py \
         --num_gpu $num_gpu \
         --prompt_sz $prompt_sz \
         --response_sz $response_sz \
