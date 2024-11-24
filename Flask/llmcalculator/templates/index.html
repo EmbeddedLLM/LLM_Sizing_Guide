@@ -201,113 +201,257 @@
         background-color: #cccccc;
         cursor: not-allowed;
       }
+
+
+      /* Updated styles for tabs */
+      .tab {
+        overflow: hidden;
+        border: 1px solid #ccc;
+        background-color: #f1f1f1;
+        display: flex;
+        justify-content: center;
+      }
+      .tab button {
+        background-color: inherit;
+        float: left;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        padding: 14px 16px;
+        transition: 0.3s;
+        font-size: 16px;
+        flex-grow: 1;
+        color: #333; /* Dark text color for inactive tabs */
+      }
+
+      .tab button:hover {
+        background-color: #ddd;
+      }
+
+      .tab button.active {
+        background-color: #007bff;
+        color: white; /* White text color for active tab */
+      }
+      .tabcontent {
+        display: none;
+        padding: 6px 12px;
+        border: 1px solid #ccc;
+        border-top: none;
+      }
     </style>
   </head>
   <body>
     <h1>LLM Performance Estimation Calculator</h1>
-    <form id="calculatorForm">
-      <label for="model_list"
-        >Model List (HuggingFace paths, comma-separated) e.g.
-        meta-llama/Llama-3.1-8B-Instruct,meta-llama/Llama-3.1-70B-Instruct:</label
-      >
-      <input
-        type="text"
-        id="model_list"
-        value="meta-llama/Llama-3.1-70B-Instruct,meta-llama/Llama-3.1-405B-Instruct"
-        required
-      /><br />
-
-      <label for="num_gpu">Number of GPUs:</label>
-      <input type="number" id="num_gpu" min="1" value="8" required /><br />
-
-      <label for="use_case">Use Case:</label>
-      <select id="use_case">
-        <option value="">Select a use case</option>
-        <option value="Multi-turn_Chat">Multi-turn Chat</option>
-        <option value="Summarization">Summarization</option>
-        <option value="Literature_Creation">Literature Creation</option>
-        <option value="RAG">RAG</option>
-        <option value="Agentic_AI">Agentic AI</option>
-        <option value="Code_Generation">Code Generation</option>
-        <option value="Translation">Translation</option>
-        <option value="Question_Answering">Question Answering</option></select
-      ><br />
-
-      <label for="prompt_sz">Prompt Size (Number of Input Tokens):</label>
-      <input type="number" id="prompt_sz" min="1" required /><br />
-
-      <label for="response_sz">Response Size (Number of Output Tokens):</label>
-      <input type="number" id="response_sz" min="1" required /><br />
-
-      <label for="n_concurrent_req">Number of Concurrent Requests:</label>
-      <input
-        type="number"
-        id="n_concurrent_req"
-        min="1"
-        value="16"
-        required
-      /><br />
-
-      <label for="ctx_length_type">Context Length Type:</label>
-      <select id="ctx_length_type">
-        <option value="full">Full Model Context Length</option>
-        <option value="custom">Custom Context Length</option></select
-      ><br />
-
-      <div id="custom_ctx_length_container" style="display: none">
-        <label for="custom_ctx_length">Custom Context Length:</label>
-        <input
-          type="number"
-          id="custom_ctx_length"
-          min="1"
-          value="8192"
-          required
-        /><br />
-      </div>
-
-      <label for="datatype">Datatype:</label>
-      <select id="datatype">
-        <option value="BF16">BF16</option>
-        <option value="FP8">FP8</option></select
-      ><br />
-
-      <button type="submit">Calculate</button>
-    </form>
-
-    <!-- Add this right after the form -->
-    <div id="loadingSpinner" class="spinner"></div>
-
-    <div class="section">
-      <h2>Available GPU Specifications</h2>
-      <button class="collapsible">
-        Show GPU Specs <span class="icon"></span>
-      </button>
-      <div class="content" id="gpuSpecsTable"></div>
+    <!-- Add tab buttons -->
+    <div class="tab">
+        <button class="tablinks" onclick="openTab(event, 'Calculator')">General Calculator</button>
+        <button class="tablinks" onclick="openTab(event, 'TargetPerformance')">Performance Oriented Calculator</button>
     </div>
 
-    <div id="results">
-      <div class="section">
-        <h2>Estimated Memory Footprint</h2>
-        <p>
-          It shows the memory required to serve number of concurrent requests at
-          full context window of model.
-        </p>
-        <div id="memoryFootprintTable"></div>
-      </div>
+    <!-- Calculator tab content -->
+    <div id="Calculator" class="tabcontent">
+      <form id="calculatorForm">
+        <label for="model_list"
+          >Model List (HuggingFace paths, comma-separated) e.g.
+          meta-llama/Llama-3.1-8B-Instruct,meta-llama/Llama-3.1-70B-Instruct:</label
+        >
+        <input
+          type="text"
+          id="model_list"
+          value="meta-llama/Llama-3.1-70B-Instruct,meta-llama/Llama-3.1-405B-Instruct"
+          required
+        /><br />
+
+        <label for="num_gpu">Number of GPUs:</label>
+        <input type="number" id="num_gpu" min="1" value="8" required /><br />
+
+        <label for="use_case">Use Case:</label>
+        <select id="use_case">
+          <option value="">Select a use case</option>
+          <option value="Multi-turn_Chat">Multi-turn Chat</option>
+          <option value="Summarization">Summarization</option>
+          <option value="Literature_Creation">Literature Creation</option>
+          <option value="RAG">RAG</option>
+          <option value="Agentic_AI">Agentic AI</option>
+          <option value="Code_Generation">Code Generation</option>
+          <option value="Translation">Translation</option>
+          <option value="Question_Answering">Question Answering</option></select
+        ><br />
+
+        <label for="prompt_sz">Prompt Size (Number of Input Tokens):</label>
+        <input type="number" id="prompt_sz" min="1" required /><br />
+
+        <label for="response_sz">Response Size (Number of Output Tokens):</label>
+        <input type="number" id="response_sz" min="1" required /><br />
+
+        <label for="n_concurrent_req">Number of Concurrent Requests:</label>
+        <input
+          type="number"
+          id="n_concurrent_req"
+          min="1"
+          value="16"
+          required
+        /><br />
+
+        <label for="ctx_length_type">Context Length Type:</label>
+        <select id="ctx_length_type">
+          <option value="full">Full Model Context Length</option>
+          <option value="custom">Custom Context Length</option></select
+        ><br />
+
+        <div id="custom_ctx_length_container" style="display: none">
+          <label for="custom_ctx_length">Custom Context Length:</label>
+          <input
+            type="number"
+            id="custom_ctx_length"
+            min="1"
+            value="8192"
+            required
+          /><br />
+        </div>
+
+        <label for="datatype">Datatype:</label>
+        <select id="datatype">
+          <option value="BF16">BF16</option>
+          <option value="FP8">FP8</option></select
+        ><br />
+
+        <button type="submit">Calculate</button>
+      </form>
+
+      <!-- Add this right after the form -->
+      <div id="loadingSpinner" class="spinner"></div>
 
       <div class="section">
-        <h2>Estimated Capacity and Latency</h2>
-        <p>
-          The estimation is based on the number of GPU, Prompt Size and Response
-          Size in the calculator.
-        </p>
-        <p>
-          <span style="color: red">Red Row</span> indicate that model is not
-          deployable on the number of GPUs due to Out-Of-Memory (OOM). We still
-          compute the latency values assuming if the model is deployable.
-        </p>
-        <div id="capacityLatencyTable"></div>
+        <h2>Available GPU Specifications</h2>
+        <button class="collapsible">
+          Show GPU Specs <span class="icon"></span>
+        </button>
+        <div class="content" id="gpuSpecsTable"></div>
       </div>
+
+      <div id="results">
+        <div class="section">
+          <h2>Estimated Memory Footprint</h2>
+          <p>
+            It shows the memory required to serve number of concurrent requests at
+            full context window of model.
+          </p>
+          <div id="memoryFootprintTable"></div>
+        </div>
+
+        <div class="section">
+          <h2>Estimated Capacity and Latency</h2>
+          <p>
+            The estimation is based on the number of GPU, Prompt Size and Response
+            Size in the calculator.
+          </p>
+          <p>
+            <span style="color: red">Red Row</span> indicate that model is not
+            deployable on the number of GPUs due to Out-Of-Memory (OOM). We still
+            compute the latency values assuming if the model is deployable.
+          </p>
+          <div id="capacityLatencyTable"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Target Performance tab content -->
+    <div id="TargetPerformance" class="tabcontent">
+      <form id="targetPerformanceForm">
+          <!-- Add fields for the new endpoint -->
+
+          <label for="target_case">Target Performance Metric:</label>
+          <select id="target_case" required>
+              <option value="prefill_time">Prefill Time Per Token Per GPU (ms)</option>
+              <option value="tpot">Time-Per-Output-Token (TPOT) Per Token Per GPU (ms)</option>
+              <option value="ttft">Time-To-First-Token (TTFT) (s)</option>
+              <option value="response_time">Response Time (s)</option>
+          </select><br>
+
+          <label for="target_performance">Target Performance Value:</label>
+          <input type="number" id="target_performance" required><br>
+
+
+          <!-- Re-use some fields from the calculator form -->
+          <label for="model_list_target">Model List (HuggingFace paths, comma-separated) e.g. meta-llama/Llama-3.1-8B-Instruct,meta-llama/Llama-3.1-70B-Instruct:</label>
+          <input type="text" 
+          id="model_list_target" 
+          value="meta-llama/Llama-3.1-70B-Instruct,meta-llama/Llama-3.1-405B-Instruct"
+          required><br>
+
+
+          <label for="use_case_target">Use Case:</label>
+          <select id="use_case_target">
+            <option value="">Select a use case</option>
+            <option value="Multi-turn_Chat">Multi-turn Chat</option>
+            <option value="Summarization">Summarization</option>
+            <option value="Literature_Creation">Literature Creation</option>
+            <option value="RAG">RAG</option>
+            <option value="Agentic_AI">Agentic AI</option>
+            <option value="Code_Generation">Code Generation</option>
+            <option value="Translation">Translation</option>
+            <option value="Question_Answering">Question Answering</option></select
+          ><br />
+
+          <label for="prompt_sz_target">Prompt Size:</label>
+          <input type="number" id="prompt_sz_target" 
+          min="1"
+          value="2000"
+          required><br>
+
+          <label for="response_sz_target">Response Size:</label>
+          <input type="number" id="response_sz_target" 
+          min="1"
+          value="200" required><br>
+
+          <label for="n_concurrent_req_target">Number of Concurrent Requests:</label>
+          <input type="number" id="n_concurrent_req_target" 
+          min="1"
+          value="16" required><br>
+
+          <label for="ctx_length_type_target">Context Length Type:</label>
+          <select id="ctx_length_type_target">
+            <option value="full">Full Model Context Length</option>
+            <option value="custom">Custom Context Length</option></select
+          ><br />
+  
+          <div id="custom_ctx_length_target_container" style="display: none">
+            <label for="custom_ctx_length_target">Custom Context Length:</label>
+            <input
+              type="number"
+              id="custom_ctx_length_target"
+              min="1"
+              value="8192"
+              required
+            /><br />
+          </div>
+
+          <label for="datatype_target">Datatype:</label>
+          <select id="datatype_target">
+              <option value="BF16">BF16</option>
+              <option value="FP8">FP8</option>
+          </select><br>
+
+          <!-- Checkbox for Fit GPU -->
+          <label for="fit_gpu_target">
+            <input type="checkbox" id="fit_gpu_target" name="fit_gpu_target" checked> Fit GPU
+          </label><br>
+
+          <button type="submit">Calculate Target Performance</button>
+      </form>
+
+      <div id="loadingSpinnerTarget" class="spinner"></div>
+
+      <div class="section">
+        <h2>Available GPU Specifications</h2>
+        <button class="collapsible">
+          Show GPU Specs <span class="icon"></span>
+        </button>
+        <div class="content" id="gpuSpecsTableTarget"></div>
+      </div>
+
+      <div id="targetPerformanceResults"></div>
     </div>
 
     <div class="section disclaimer">
@@ -544,21 +688,182 @@
       }
 
       // Updated Collapsible functionality
-      const collapsible = document.querySelector(".collapsible");
-      const content = document.querySelector(".content");
+      const collapsibleButtons = document.querySelectorAll(".collapsible");
 
-      collapsible.addEventListener("click", function () {
-        this.classList.toggle("active");
-        if (content.style.maxHeight) {
-          content.style.maxHeight = null;
-        } else {
-          content.style.maxHeight = content.scrollHeight + "px";
-        }
+      collapsibleButtons.forEach((button) => {
+        button.addEventListener("click", function () {
+          this.classList.toggle("active");
+          const content = this.nextElementSibling; // Get the next sibling element (the content)
+          if (content.style.maxHeight) {
+            content.style.maxHeight = null;
+          } else {
+            content.style.maxHeight = content.scrollHeight + "px";
+          }
+        });
       });
 
       // Fetch GPU specs when the page loads
       fetchGpuSpecs();
       datatypeSelect.addEventListener("change", fetchGpuSpecs);
+
+
+      const promptSzTargetInput = document.getElementById("prompt_sz_target");
+      const responseSzTargetInput = document.getElementById("response_sz_target");
+      const useCaseTargetSelect = document.getElementById("use_case_target");
+      const ctxLengthTypeTargetSelect = document.getElementById("ctx_length_type_target");
+      const customCtxLengthTargetContainer = document.getElementById(
+        "custom_ctx_length_target_container"
+      );
+      const customCtxLengthTargetInput = document.getElementById("custom_ctx_length_target");
+
+      useCaseTargetSelect.addEventListener("change", function () {
+        const selectedUseCase = this.value;
+        if (selectedUseCase in useCases) {
+          const [minPrompt, maxPrompt, avgResponse] = useCases[selectedUseCase];
+          // promptSzInput.value = (minPrompt + maxPrompt) / 2;
+          promptSzTargetInput.value = maxPrompt;
+          responseSzTargetInput.value = avgResponse;
+        }
+      });
+
+      ctxLengthTypeTargetSelect.addEventListener("change", function () {
+        if (this.value === "custom") {
+          customCtxLengthTargetContainer.style.display = "block";
+        } else {
+          customCtxLengthTargetContainer.style.display = "none";
+        }
+      });
+
+    // Updated openTab function
+    function openTab(evt, tabName) {
+      var i, tabcontent, tablinks;
+      tabcontent = document.getElementsByClassName("tabcontent");
+      for (i = 0; i < tabcontent.length; i++) {
+        tabcontent[i].style.display = "none";
+      }
+      tablinks = document.getElementsByClassName("tablinks");
+      for (i = 0; i < tablinks.length; i++) {
+        tablinks[i].className = tablinks[i].className.replace(" active", "");
+      }
+      document.getElementById(tabName).style.display = "block";
+      evt.currentTarget.className += " active";
+    }
+
+    // Add event listener for the new form
+    document.getElementById("targetPerformanceForm").addEventListener("submit", async function(e) {
+        e.preventDefault();
+        const formData = {
+            model_list: document.getElementById("model_list_target").value,
+            target_performance: document.getElementById("target_performance").value,
+            prompt_sz: document.getElementById("prompt_sz_target").value,
+            response_sz: document.getElementById("response_sz_target").value,
+            n_concurrent_req: document.getElementById("n_concurrent_req_target").value,
+            target_case: document.getElementById("target_case").value,
+            datatype: document.getElementById("datatype_target").value,
+            ctx_window:
+            ctxLengthTypeTargetSelect.value === "full"
+                ? -1
+                : customCtxLengthTargetInput.value,
+            check_fit_gpu: document.getElementById('fit_gpu_target').checked,
+        };
+
+      // Show loading spinner and disable submit button
+      const submitButton = this.querySelector('button[type="submit"]');
+      const loadingSpinner = document.getElementById("loadingSpinnerTarget");
+      submitButton.disabled = true;
+      loadingSpinner.style.display = "block";
+
+      try {
+        const response = await axios.post("/calculate_target_performance", formData);
+        displayTargetPerformanceResults(response.data);
+      } catch (error) {
+        console.error("Error:", error);
+      } finally {
+        // Hide loading spinner and enable submit button
+        submitButton.disabled = false;
+        loadingSpinner.style.display = "none";
+      }
+    });
+
+    function displayTargetPerformanceResults(data) {
+        const resultsDiv = document.getElementById("targetPerformanceResults");
+        resultsDiv.innerHTML = "<h2>Target Performance Results</h2>";
+
+        new Tabulator("#targetPerformanceResults", {
+            data: data,
+            columns: [
+                {title: "Model", field: "0"},
+                {title: "GPU", field: "1"},
+                {title: "Number of GPUs", field: "2"},
+                {title: "KV Cache Tokens Per GPU (GiB/token)", field: "3"},
+                {title: "Prefill Time Per Token (ms)", field: "4"},
+                {title: "Time-Per-Output-Token (TPOT) (ms)", field: "5"},
+                {title: "Estimated Time-To-First-Token (TTFT) (s)", field: "6"},
+                {
+                  title: "Estimated Response Time (s) Per GPU", 
+                  field: "7",
+                  titleFormatter: function (cell, formatterParams, onRendered) {
+                    return '<div title="Estimated total time to generate the complete all concurrent responses Per GPU">Estimated Response Time (s) Per GPU</div>';
+                  },
+                },
+                {title: "GPU Vendor", field: "8"},
+            ],
+        });
+    }
+
+    // Open the Calculator tab by default
+    document.getElementsByClassName("tablinks")[0].click();
+
+    // Fetch GPU specs when the page loads and when datatype changes for both tabs
+    fetchGpuSpecs();
+    fetchGpuSpecsTarget();
+    
+    const datatypeTargetSelect = document.getElementById("datatype_target");
+    datatypeTargetSelect.addEventListener("change", fetchGpuSpecs);
+    document.getElementById("datatype_target").addEventListener("change", fetchGpuSpecsTarget);
+
+    async function fetchGpuSpecsTarget() {
+      try {
+        const response = await axios.get("/gpu_specs", {
+          params: { datatype: document.getElementById("datatype_target").value },
+        });
+        displayGpuSpecsTarget(response.data);
+      } catch (error) {
+        console.error("Error fetching GPU specs:", error);
+      }
+    }
+
+    function displayGpuSpecsTarget(gpuSpecs) {
+      const gpuSpecsTable = document.getElementById("gpuSpecsTableTarget");
+
+      // Clear existing content
+      gpuSpecsTable.innerHTML = "";
+      const table = document.createElement("table");
+      table.style.width = "100%";
+      table.style.borderCollapse = "collapse";
+      table.innerHTML = `
+              <tr>
+                  <th style="border: 1px solid #ccc; padding: 8px;">GPU Name</th>
+                  <th style="border: 1px solid #ccc; padding: 8px;">${
+                    document.getElementById("datatype_target").value
+                  } TFLOPS</th>
+                  <th style="border: 1px solid #ccc; padding: 8px;">Memory (GB)</th>
+                  <th style="border: 1px solid #ccc; padding: 8px;">Memory Bandwidth (Gbps)</th>
+              </tr>
+          `;
+      gpuSpecs.forEach((gpu) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+                  <td style="border: 1px solid #ccc; padding: 8px;">${gpu.name}</td>
+                  <td style="border: 1px solid #ccc; padding: 8px;">${gpu.fp16_tflops}</td>
+                  <td style="border: 1px solid #ccc; padding: 8px;">${gpu.memory_gb}</td>
+                  <td style="border: 1px solid #ccc; padding: 8px;">${gpu.memory_bandwidth_gbps}</td>
+              `;
+        table.appendChild(row);
+      });
+      gpuSpecsTable.appendChild(table);
+    }
+    
     </script>
   </body>
 </html>
